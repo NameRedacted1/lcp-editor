@@ -91,6 +91,7 @@ const framesLayout = (cells: { key: string; label: string }[]) => lay('mf', [
   ['Mounts', [chips('mounts', 'mounts')]],
   ['Traits', [rows('traits', NAME_DESC_EXTRA_COLUMNS)]],
   ['Core System', [f('group', 'core_system', { fields: [txt('name', { wide: true }), area('description'), txt('activation'), txt('active_name'), area('active_effect'), txt('passive_name'), area('passive_effect')] })]],
+  ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true }), rows('active_counters', COUNTER_COLUMNS, { label: 'Active Counter', addLabel: '+ Active Counter', optional: true })]],
   ['Description', [area('description')]],
 ]);
 
@@ -142,6 +143,8 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Mounted Effect', [area('mounted_effect', { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
+    ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
+    ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
   ]),
   'actions.json': lay('act', [
     ['Identity', [txt('name', { wide: true }), ident('id')]],
