@@ -80,6 +80,17 @@ export function collectArchiveJson(
   }
 }
 
+// core ships statuses named but unidentified. every ref is by id, so derive them on the way in
+function fillStatusIds(data: PackData): void {
+  const list = data['statuses.json'];
+  if (!Array.isArray(list)) return;
+  for (const item of list) {
+    if (!isPlainObject(item) || asText(item.id).trim() !== '') continue;
+    const id = statusIdFor(asText(item.name));
+    if (id !== '') item.id = id;
+  }
+}
+
 export function discoverPacks(entries: Map<string, Uint8Array>): DiscoveredPack[] {
   const byDir = new Map<string, PackData>();
   const unreadable: string[] = [];
@@ -110,7 +121,9 @@ export function discoverPacks(entries: Map<string, Uint8Array>): DiscoveredPack[
       'lcp_manifest.json' in data ||
       'info.json' in data ||
       Object.entries(data).some(([base, value]) => PACK_ARRAY_FILES.has(base) && Array.isArray(value));
-    if (qualifies) packs.push({ dir, data });
+    if (!qualifies) continue;
+    fillStatusIds(data);
+    packs.push({ dir, data });
   }
 
   packs.sort((a, b) => {

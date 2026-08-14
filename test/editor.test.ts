@@ -324,6 +324,34 @@ test('zip import', async () => {
   assert.match(toast, /README\.md/);
   assert.match(toast, /bad JSON/);
   assert.match(toast, /not JSON/);
+
+  // core ships statuses with names only, nested under a versioned dir. refs resolve by id or not at all
+  const official = new Map<string, Uint8Array>();
+  collectArchiveJson(
+    fflate.zipSync({
+      'lancer-data-3.1.7/package.json': fflate.strToU8(JSON.stringify({ name: 'lancer-data' })),
+      'lancer-data-3.1.7/lib/info.json': fflate.strToU8(JSON.stringify({ name: 'LANCER Core' })),
+      'lancer-data-3.1.7/lib/statuses.json': fflate.strToU8(
+        JSON.stringify([
+          { name: 'Lock On' },
+          { name: 'Slowed' },
+          { name: 'Shut Down' },
+          { name: 'Prone' },
+          { id: 'kept', name: 'Already Identified' },
+        ]),
+      ),
+    }),
+    '',
+    0,
+    official,
+  );
+  const core = discoverPacks(official);
+  assert.equal(core.length, 1, 'the versioned wrapper dir was taken for a pack');
+  assert.deepEqual(
+    core[0]!.data['statuses.json'].map((status: any) => status.id),
+    ['lockon', 'slow', 'shut-down', 'prone', 'kept'],
+    'uploaded statuses lost the ids every status ref resolves against',
+  );
 });
 
 test('import and export round-trip', async () => {
