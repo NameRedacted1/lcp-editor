@@ -671,7 +671,11 @@ function packCategoryNames(pack: PackDraft): string[] {
   const aggregates = new Set(npcAggregateFiles(pack));
   const names = new Set<string>();
   for (const [cat, value] of Object.entries(pack.data)) {
-    if (cat === PACK_MANIFEST || !cat.endsWith('.json') || !Array.isArray(value)) continue;
+    if (cat === PACK_MANIFEST || cat === 'info.json' || !cat.endsWith('.json')) continue;
+    if (!Array.isArray(value)) {
+      if (isPlainObject(value)) names.add(cat);
+      continue;
+    }
     if (aggregates.has(cat)) {
       for (const item of value) {
         const kind = npcKindOf(item);
@@ -1246,6 +1250,9 @@ function updateCategoryBadge(cat: string) {
     const count = visibleCatCount(cat);
     if (isListCategory(cat) && count > 0) countText = `<span class="badge">${count}</span>`;
     else if (cat === 'lcp_manifest.json' && currentPack.data[cat]) countText = '<span class="badge">1</span>';
+    else if (isPlainObject(currentPack.data[cat]) && Object.keys(currentPack.data[cat]).length > 0) {
+      countText = `<span class="badge">${Object.keys(currentPack.data[cat]).length}</span>`;
+    }
   }
   let errCount = 0;
   for (const key of itemValidationErrors.keys()) {

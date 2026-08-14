@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -258,7 +258,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
   'bonds.json': lay('bond', [
     ['Identity', [txt('name', { wide: true }), ident('id')]],
     ['Ideals', [f('stringlist', 'major_ideals'), f('stringlist', 'minor_ideals')]],
-    ['Questions', [f('stringlist', 'questions')]],
+    ['Questions', [rows('questions', BOND_QUESTION_COLUMNS)]],
     ['Powers', [rows('powers', BOND_POWER_COLUMNS)]],
   ]),
   'tables.json': lay('table', [
@@ -963,7 +963,7 @@ function buildControl(
     case 'rows':
       return buildObjectRows(spec, owner, path, fieldId);
     case 'stringlist':
-      return buildStringListControl(spec, owner, fieldId);
+      return buildStringListControl(spec, owner, path, fieldId);
     case 'stats':
       return buildStatsGrid(spec, owner, path, fieldId);
     case 'tiers':
@@ -2502,12 +2502,19 @@ function buildObjectRows(spec: FieldSpec, owner: any, path: (string | number)[],
   });
 }
 
-function buildStringListControl(spec: FieldSpec, owner: any, fieldId: string): HTMLElement {
+function buildStringListControl(spec: FieldSpec, owner: any, path: (string | number)[], fieldId: string): HTMLElement {
   const list: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
   return listEditor(spec, owner, list, {
     rowData: (idx) => list[idx],
     title: (_value, idx) => `${spec.label} ${idx + 1}`,
     body: (row, value, idx) => {
+      if (value !== null && typeof value === 'object') {
+        const block = document.createElement('div');
+        block.className = 'fallback-block';
+        renderRecursiveForm(value, [...path, idx], block, { bare: true });
+        row.appendChild(block);
+        return;
+      }
       const input = document.createElement('textarea');
       input.className = 'form-textarea';
       input.id = controlId(`${fieldId}.${idx}`);

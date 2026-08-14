@@ -288,6 +288,11 @@ export const DOWNTIME_RESULT_COLUMNS: FieldSpec[] = [
   { key: 'text', label: 'Text', kind: 'textarea', wide: true },
 ];
 
+export const BOND_QUESTION_COLUMNS: FieldSpec[] = [
+  { key: 'question', label: 'Question', kind: 'textarea', wide: true },
+  { key: 'options', label: 'Option', kind: 'stringlist', wide: true, optional: true, addLabel: '+ Option' },
+];
+
 export const BOND_POWER_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'description', label: 'Description', kind: 'textarea', wide: true },
