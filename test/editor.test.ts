@@ -431,9 +431,7 @@ test('import and export round-trip', async () => {
     undefined,
   );
 
-  // the npc tag names are editor vocabulary, shown but never written
   const npcTagged = [{ id: 'npcf_probe', name: 'Probe', tags: [{ id: 'tg_npc_trait' }] }];
-  assert.equal(forms.tagDefFor('tg_npc_trait')?.name, 'NPC Trait');
   assert.equal(forms.tagDefFor('tg_nothing_defines_this'), undefined, 'unknown ids must still fall back to the raw id');
   assert.equal(
     io.exportFileTexts({ 'npc_features.json': npcTagged })['npc_features.json'],

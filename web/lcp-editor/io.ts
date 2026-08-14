@@ -136,7 +136,6 @@ export function discoverPacks(entries: Map<string, Uint8Array>): DiscoveredPack[
 
 const RULES_TERMS = new Set([
   'immunity', 'cover', 'grappled',
-  'tg_npc_trait', 'tg_npc_system', 'tg_npc_weapon', 'tg_npc_tech', 'tg_npc_reaction',
 ]);
 const REF_EXTRA_SCALAR_KEYS = new Set(['immunity']);
 
