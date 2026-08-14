@@ -369,6 +369,8 @@ test('import and export round-trip', async () => {
     'pilot_gear.json': [{ id: 'pg_case', name: 'Ghost Case', type: 'armor', integrated: ['pg_ghost_chip'] }],
     'systems.json': [{ id: 'ms_nest', name: 'Drone Nest', deployables: ['dep_missing_drone'] }],
     'mods.json': [{ id: 'wm_hook', name: 'Hook', restricted_sizes: ['Superheavy'] }],
+    'weapons.json': [{ id: 'mw_gun', name: 'Gun', tags: [{ id: 'tg_acc' }] }],
+    'tags.json': [{ id: 'tg_acc', name: 'Accurate {VAL}', description: 'd' }],
   });
   state.setCurrentPack(pack);
   ui.setLibraryDrafts([]);
@@ -394,6 +396,20 @@ test('import and export round-trip', async () => {
     findById(modForm, forms.controlId('restricted_sizes')),
   );
   assert.equal(findById(modForm, forms.controlId('allowed_sizes')), undefined);
+
+  ui.selectCategory('weapons.json');
+  ui.selectItem(0);
+  const weaponForm = doc.getElementById('form-container');
+  const chipVal = weaponForm.querySelectorAll('chip-val');
+  assert.equal(chipVal.length, 1);
+  assert.equal(chipVal[0].value, '1', 'absent tag val reads as 1');
+  const gun = (pack as any).data['weapons.json'][0];
+  chipVal[0].value = '3';
+  chipVal[0].dispatch('change');
+  assert.equal(gun.tags[0].val, 3);
+  chipVal[0].value = '';
+  chipVal[0].dispatch('change');
+  assert.equal('val' in gun.tags[0], false, 'blank deletes the val');
 
   ui.selectCategory('frames.json');
   ui.selectItem(0);

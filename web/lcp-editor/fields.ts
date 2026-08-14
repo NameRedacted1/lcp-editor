@@ -172,6 +172,38 @@ export const ADD_STATUS_COLUMNS: FieldSpec[] = [
   { key: 'save', label: 'Save', kind: 'text', optional: true },
 ];
 
+export const ADD_RESIST_COLUMNS: FieldSpec[] = [
+  { key: 'immunity', label: 'Immunity', kind: 'text', optional: true },
+  { key: 'resist', label: 'Resist', kind: 'text', optional: true },
+  { key: 'resistance', label: 'Resistance', kind: 'text', optional: true },
+  { key: 'vulnerable', label: 'Vulnerable', kind: 'text', optional: true },
+  { key: 'target', label: 'Target', kind: 'text', optional: true },
+  { key: 'duration', label: 'Duration', kind: 'text', optional: true },
+  { key: 'aoe', label: 'AoE', kind: 'checkbox', optional: true },
+];
+
+export const ADD_SPECIAL_COLUMNS: FieldSpec[] = [
+  { key: 'attribute', label: 'Attribute', kind: 'text', wide: true },
+  { key: 'detail', label: 'Detail', kind: 'textarea', wide: true, optional: true },
+  { key: 'target', label: 'Target', kind: 'text', optional: true },
+  { key: 'duration', label: 'Duration', kind: 'text', optional: true },
+  { key: 'aoe', label: 'AoE', kind: 'checkbox', optional: true },
+];
+
+export const ADD_OTHER_COLUMNS: FieldSpec[] = [
+  { key: 'type', label: 'Type', kind: 'text' },
+  { key: 'val', label: 'Value', kind: 'text' },
+  { key: 'target', label: 'Target', kind: 'text', optional: true },
+  { key: 'duration', label: 'Duration', kind: 'text', optional: true },
+  { key: 'aoe', label: 'AoE', kind: 'checkbox', optional: true },
+];
+
+export const ADD_EFFECT_ROW_COLUMNS: FieldSpec[] = [
+  { key: 'add_resist', label: 'Add Resist', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Resist', columns: ADD_RESIST_COLUMNS },
+  { key: 'add_special', label: 'Add Special', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Special', columns: ADD_SPECIAL_COLUMNS },
+  { key: 'add_other', label: 'Add Other', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Other', columns: ADD_OTHER_COLUMNS },
+];
+
 export const ACTION_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'activation', label: 'Activation', kind: 'select', vocab: 'activations' },
@@ -189,6 +221,7 @@ export const ACTION_COLUMNS: FieldSpec[] = [
     addLabel: '+ Add Status',
     columns: ADD_STATUS_COLUMNS,
   },
+  ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
 export const DEPLOYABLE_COLUMNS: FieldSpec[] = [
@@ -196,6 +229,7 @@ export const DEPLOYABLE_COLUMNS: FieldSpec[] = [
   { key: 'type', label: 'Type', kind: 'text', optional: true },
   { key: 'activation', label: 'Activation', kind: 'select', vocab: 'activations', optional: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true, optional: true },
+  ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
 export const SYNERGY_COLUMNS: FieldSpec[] = [
@@ -230,6 +264,7 @@ export const SYSTEM_BONUS_COLUMNS: FieldSpec[] = [
 export const ACTIVE_EFFECT_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
+  ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
 export const NAME_DESC_EXTRA_COLUMNS: FieldSpec[] = [

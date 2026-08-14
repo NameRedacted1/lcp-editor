@@ -104,7 +104,7 @@ function tagPreviewLabel(entry: any): string {
   const def = tagDefFor(id);
   const name = def?.name !== undefined && def.name !== '' ? def.name : id;
   const val = entry !== null && typeof entry === 'object' ? entry.val : undefined;
-  if (val === undefined || val === null || val === '') return name;
+  if (val === undefined || val === null || val === '') return name.replace('{VAL}', '1');
   if (name.includes('{VAL}')) return name.replace('{VAL}', String(val));
   return `${name} ${val}`;
 }

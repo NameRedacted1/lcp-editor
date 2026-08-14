@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -172,6 +172,9 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Activation', [sel('activation', 'activations'), sel('action_type', 'activations', { optional: true }), area('trigger', { optional: true }), txt('frequency', { optional: true })]],
     ['Detail', [txt('terse', { wide: true }), area('detail')]],
     ['Add Status', [rows('add_status', ADD_STATUS_COLUMNS, { optional: true, addLabel: '+ Add Status' })]],
+    ['Add Resist', [rows('add_resist', ADD_RESIST_COLUMNS, { optional: true })]],
+    ['Add Special', [rows('add_special', ADD_SPECIAL_COLUMNS, { optional: true })]],
+    ['Add Other', [rows('add_other', ADD_OTHER_COLUMNS, { optional: true })]],
     ['Flags', [chk('pilot'), chk('hidden')]],
   ]),
   'pilot_gear.json': lay('pg', [
@@ -340,6 +343,8 @@ const V2_CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Effect', [area('effect'), area('trigger'), area('on_hit', { optional: true })]],
     ['Tags', [f('tags')]],
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
+    ['Add Resist', [rows('add_resist', ADD_RESIST_COLUMNS, { optional: true })]],
+    ['Add Other', [rows('add_other', ADD_OTHER_COLUMNS, { optional: true })]],
   ]),
   'manufacturers.json': lay('', [
     ['Identity', [txt('name', { wide: true }), ident('id')]],
@@ -1342,9 +1347,7 @@ export function tagIdOf(entry: any): string {
 const TAG_CHIP_SURFACE = 'tags';
 
 function tagChipVal(text: string): number | string {
-  const trimmed = text.trim();
-  if (trimmed === '') return 0;
-  return Number.isNaN(Number(trimmed)) ? trimmed : Number(trimmed);
+  return Number.isNaN(Number(text)) ? text : Number(text);
 }
 
 function buildTagsControl(owner: any, key: string, fieldId?: string): HTMLElement {
@@ -1365,11 +1368,18 @@ function buildTagsControl(owner: any, key: string, fieldId?: string): HTMLElemen
       input.type = 'text';
       input.className = 'chip-val';
       input.setAttribute('aria-label', `${chipTagName(def, id)} value`);
-      input.value = asText(entry !== null && typeof entry === 'object' ? entry.val : '') || '0';
+      input.value = asText(entry !== null && typeof entry === 'object' ? entry.val : '') || '1';
+      const fit = () => {
+        input.style.width = `${Math.max(input.value.length, 1) + 2}ch`;
+      };
+      fit();
+      input.addEventListener('input', fit);
       input.addEventListener('change', () => {
         const target = entryObjectAt(list, idx);
         if (target.id === undefined) target.id = id;
-        target.val = tagChipVal(input.value);
+        const trimmed = input.value.trim();
+        if (trimmed === '') delete target.val;
+        else target.val = tagChipVal(trimmed);
         commitDesigned({ immediate: true });
       });
       value = input;
