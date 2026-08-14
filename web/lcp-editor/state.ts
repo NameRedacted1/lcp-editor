@@ -22,6 +22,7 @@ const REFERENCE_DEFAULTS: Record<string, string[]> = {
   licenses: [],
   bonusIds: [],
   statusIds: [],
+  talentIds: [],
   synergyLocations: [],
 };
 
@@ -44,6 +45,7 @@ export const REFERENCE_DATALIST_IDS: Record<string, string> = {
   npcRoles: 'dl-ref-npc-roles',
   memeticTypes: 'dl-ref-memetic-types',
   statusIds: 'dl-ref-status-ids',
+  talentIds: 'dl-ref-talent-ids',
 };
 
 export let referenceIndex: Record<string, string[]> = { ...REFERENCE_DEFAULTS };
@@ -98,6 +100,7 @@ function harvestDraftReferences(draft: PackDraft, buckets: Record<string, Set<st
         addReference(buckets.statusTypes!, entry.type);
         addReference(buckets.statusIds!, entry.id);
       }
+      if (cat === 'talents.json') addReference(buckets.talentIds!, entry.id);
       if (cat === 'reserves.json') addReference(buckets.reserveTypes!, entry.type);
       if (cat === 'pilot_gear.json') addReference(buckets.gearTypes!, entry.type);
       if (cat === 'npc_classes.json') addReference(buckets.npcRoles!, entry.role);

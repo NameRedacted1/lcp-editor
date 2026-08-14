@@ -16,6 +16,7 @@ export type VocabKey =
   | 'licenses'
   | 'bonusIds'
   | 'statusIds'
+  | 'talentIds'
   | 'synergyLocations';
 
 export type FieldKind =

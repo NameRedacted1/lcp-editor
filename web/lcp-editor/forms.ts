@@ -127,6 +127,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
+    ['Talent Link', [txt('talent_id', { list: 'talentIds', optional: true }), f('number', 'talent_rank', { optional: true }), chk('talent_item', { optional: true })]],
     ['Flags', [chk('no_attack'), chk('no_mods'), chk('no_core_bonus'), chk('no_synergies')]],
   ]),
   'systems.json': lay('ms', [
@@ -140,6 +141,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
     ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
+    ['Talent Link', [txt('talent_id', { list: 'talentIds', optional: true }), f('number', 'talent_rank', { optional: true }), chk('talent_item', { optional: true })]],
   ]),
   'mods.json': modsLayout('restricted_sizes'),
   'frames.json': framesLayout(FRAME_STAT_CELLS),
@@ -1814,7 +1816,7 @@ function rewriteIdArrayInPlace(list: unknown[], renamed: Map<string, string>): v
   }
 }
 
-export const ID_SCALAR_KEYS = new Set(['origin', 'license_id', 'source']);
+export const ID_SCALAR_KEYS = new Set(['origin', 'license_id', 'source', 'talent_id']);
 
 
 export function rewriteIdReferences(data: Record<string, unknown>, renamed: Map<string, string>): void {
