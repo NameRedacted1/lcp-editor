@@ -165,7 +165,7 @@ export const NAME_DESC_COLUMNS: FieldSpec[] = [
   { key: 'description', label: 'Description', kind: 'textarea', wide: true },
 ];
 
-const ADD_STATUS_COLUMNS: FieldSpec[] = [
+export const ADD_STATUS_COLUMNS: FieldSpec[] = [
   { key: 'id', label: 'Status', kind: 'text', list: 'statusIds' },
   { key: 'duration', label: 'Duration', kind: 'text', optional: true },
   { key: 'save', label: 'Save', kind: 'text', optional: true },

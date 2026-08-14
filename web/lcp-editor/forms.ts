@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, BOND_POWER_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -79,10 +79,11 @@ function lay(prefix: string, sections: [string, FieldSpec[]][], extra: LayoutExt
 
 const modsLayout = (sizesKey: string) => lay('wm', [
   ['Identity', IDENTITY_FIELDS],
-  ['Fits', [num('sp', 0, 12), chips('allowed_types', 'weaponTypes'), chips(sizesKey, 'mounts')]],
+  ['Fits', [num('sp', 0, 12), f('number', 'cost', { optional: true }), chips('allowed_types', 'weaponTypes'), chips(sizesKey, 'mounts')]],
   ['Adds', [f('damage', 'added_damage', { addLabel: '+ Damage' }), f('range', 'added_range', { addLabel: '+ Range' }), f('tags', 'added_tags')]],
   ['Tags', [f('tags')]],
-  ['Effect', [area('effect'), area('description', { optional: true })]],
+  ['Effect', [area('effect'), area('description', { optional: true }), area('on_hit', { optional: true })]],
+  ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
 ]);
 
 const framesLayout = (cells: { key: string; label: string }[]) => lay('mf', [
@@ -117,7 +118,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
   categoryLayoutsCache ??= {
   'weapons.json': lay('mw', [
     ['Identity', IDENTITY_FIELDS],
-    ['Mount & Type', [sel('mount', 'mounts'), sel('type', 'weaponTypes'), num('sp', 0, 12)]],
+    ['Mount & Type', [sel('mount', 'mounts'), sel('type', 'weaponTypes'), num('sp', 0, 12), f('number', 'cost', { optional: true })]],
     ['Damage & Range', [f('damage'), f('range')]],
     ['Tags', [f('tags')]],
     ['Effect', [area('effect'), area('description', { optional: true }), area('on_attack'), area('on_hit'), area('on_crit')]],
@@ -125,6 +126,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Profiles', [rows('profiles', WEAPON_PROFILE_COLUMNS, { optional: true })]],
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
+    ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
     ['Flags', [chk('no_attack'), chk('no_mods'), chk('no_core_bonus'), chk('no_synergies')]],
   ]),
   'systems.json': lay('ms', [
@@ -137,18 +139,19 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
+    ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
   ]),
   'mods.json': modsLayout('restricted_sizes'),
   'frames.json': framesLayout(FRAME_STAT_CELLS),
   'talents.json': lay('t', [
-    ['Identity', [txt('name', { wide: true }), ident('id'), txt('icon'), txt('terse', { wide: true })]],
+    ['Identity', [txt('name', { wide: true }), ident('id'), txt('icon'), txt('icon_url', { wide: true, optional: true }), txt('terse', { wide: true })]],
     ['Description', [area('description')]],
     ['Ranks', [rows('ranks', NAME_DESC_EXTRA_COLUMNS)]],
   ]),
   'npc_features.json': lay('npcf', [
     ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'featureTypes'), chk('base'), f('origin')]],
-    ['Combat', [f('damage', 'damage', { optional: true, tiered: true }), f('range', 'range', { optional: true }), f('tierscalar', 'attack_bonus', { optional: true }), f('tierscalar', 'accuracy', { optional: true })]],
-    ['Effect', [area('effect'), area('trigger')]],
+    ['Combat', [txt('weapon_type', { optional: true }), sel('activation', 'activations', { optional: true }), f('damage', 'damage', { optional: true, tiered: true }), f('range', 'range', { optional: true }), f('tierscalar', 'attack_bonus', { optional: true }), f('tierscalar', 'accuracy', { optional: true })]],
+    ['Effect', [area('effect'), area('trigger'), area('on_hit', { optional: true })]],
     ['Tags', [f('tags')]],
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
   ]),
@@ -166,25 +169,29 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Identity', [txt('name', { wide: true }), ident('id')]],
     ['Activation', [sel('activation', 'activations'), sel('action_type', 'activations', { optional: true }), area('trigger', { optional: true }), txt('frequency', { optional: true })]],
     ['Detail', [txt('terse', { wide: true }), area('detail')]],
+    ['Add Status', [rows('add_status', ADD_STATUS_COLUMNS, { optional: true, addLabel: '+ Add Status' })]],
     ['Flags', [chk('pilot'), chk('hidden')]],
   ]),
   'pilot_gear.json': lay('pg', [
     ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'gearTypes')]],
     ['Tags', [f('tags')]],
     ['Description', [area('description')]],
-    ['Weapon', [f('damage', 'damage', { optional: true }), f('range', 'range', { optional: true }), area('effect', { optional: true })]],
+    ['Weapon', [f('damage', 'damage', { optional: true }), f('range', 'range', { optional: true }), area('effect', { optional: true }), area('on_hit', { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
     ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
+    ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
   ]),
   'reserves.json': lay('reserve', [
-    ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'reserveTypes'), txt('label')]],
+    ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'reserveTypes'), txt('label'), chk('deprecated')]],
     ['Description', [area('description')]],
     ['Resource', [txt('resource_name', { optional: true }), txt('resource_cost', { optional: true }), area('resource_note', { optional: true }), chk('consumable')]],
+    ['Damage', [f('damage', 'damage', { optional: true, addLabel: '+ Damage' })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
     ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
     ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
+    ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
   ]),
   'statuses.json': lay('', [
     ['Identity', [txt('name', { wide: true }), ident('id'), txt('icon', { optional: true })]],
@@ -555,11 +562,13 @@ function localTagDefs(): Map<string, TagDef> {
     if (!entry || typeof entry !== 'object') continue;
     const id = asText((entry as any).id);
     if (id === '') continue;
+    const name = asText((entry as any).name);
+    const description = asText((entry as any).description);
     out.set(id, {
       id,
-      name: asText((entry as any).name),
-      description: asText((entry as any).description),
-      hasVal: 'val' in (entry as any),
+      name,
+      description,
+      hasVal: `${name}${description}`.includes('{VAL}'),
     });
   }
   return out;

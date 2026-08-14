@@ -1737,7 +1737,7 @@ export function harvestTagDefs(draft: PackDraft, defs: Map<string, TagDef>) {
       const def = upsert(entry.id);
       if (typeof entry.name === 'string' && entry.name) def.name = entry.name;
       if (typeof entry.description === 'string' && entry.description) def.description = entry.description;
-      if ('val' in entry) def.hasVal = true;
+      if (`${def.name}${def.description}`.includes('{VAL}')) def.hasVal = true;
     }
   }
 
@@ -1752,8 +1752,7 @@ export function harvestTagDefs(draft: PackDraft, defs: Map<string, TagDef>) {
         if (!usage || typeof usage !== 'object') continue;
         const id = (usage as any).id;
         if (typeof id !== 'string' || !id) continue;
-        if ((usage as any).val !== undefined) upsert(id).hasVal = true;
-        else upsert(id);
+        upsert(id);
       }
     }
   }
