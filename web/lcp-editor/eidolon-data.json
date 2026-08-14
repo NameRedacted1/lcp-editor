@@ -1,0 +1,229 @@
+{
+  "layerStatTable": {
+    "adamant": {
+      "rows": [
+        {
+          "id": "armor",
+          "val": [
+            10,
+            15,
+            20
+          ],
+          "override": true
+        }
+      ]
+    },
+    "blurred": {
+      "rows": [
+        {
+          "id": "evade",
+          "val": 20,
+          "override": true
+        },
+        {
+          "id": "speed",
+          "val": 10,
+          "override": true
+        }
+      ]
+    },
+    "marine": {
+      "rows": [
+        {
+          "id": "size",
+          "val": 3,
+          "override": true
+        },
+        {
+          "id": "edef",
+          "val": 5,
+          "override": true
+        },
+        {
+          "id": "hull",
+          "val": 6
+        }
+      ]
+    },
+    "enceladian": {
+      "rows": [
+        {
+          "id": "armor",
+          "val": 2,
+          "override": true
+        }
+      ]
+    },
+    "labyrinthine": {
+      "rows": [
+        {
+          "id": "systems",
+          "val": [
+            2,
+            4,
+            6
+          ]
+        }
+      ]
+    },
+    "punishment": {
+      "rows": [
+        {
+          "id": "armor",
+          "val": 2,
+          "override": true
+        },
+        {
+          "id": "speed",
+          "val": 2,
+          "override": true
+        }
+      ]
+    },
+    "purity": {
+      "rows": [
+        {
+          "id": "hp",
+          "val": 1,
+          "override": true
+        }
+      ]
+    },
+    "siege": {
+      "rows": [
+        {
+          "id": "speed",
+          "val": 6,
+          "override": true
+        },
+        {
+          "id": "armor",
+          "val": 2,
+          "override": true
+        }
+      ]
+    },
+    "screaming": {
+      "rows": [
+        {
+          "id": "speed",
+          "val": 2,
+          "override": true
+        }
+      ]
+    },
+    "stable": {
+      "rows": [
+        {
+          "id": "hp",
+          "val": [
+            45,
+            55,
+            65
+          ],
+          "override": true
+        }
+      ]
+    },
+    "tempest": {
+      "rows": [
+        {
+          "id": "speed",
+          "val": 3,
+          "override": true
+        }
+      ]
+    },
+    "abyssal": {
+      "rows": [
+        {
+          "id": "size",
+          "val": 0.5,
+          "override": true
+        }
+      ]
+    }
+  },
+  "layerStats": {
+    "hp": [
+      10,
+      15,
+      20
+    ],
+    "size": 2,
+    "armor": 0,
+    "heatcap": 10,
+    "speed": 5,
+    "sensor": 20,
+    "evasion": [
+      10,
+      12,
+      14
+    ],
+    "edef": [
+      10,
+      12,
+      14
+    ],
+    "save": [
+      12,
+      14,
+      16
+    ],
+    "skills": [
+      1,
+      2,
+      3
+    ]
+  },
+  "shardStats": {
+    "hp": [
+      5,
+      6,
+      8
+    ],
+    "size": 0.5,
+    "armor": 0,
+    "heatcap": 5,
+    "speed": 5,
+    "sensor": 20,
+    "evasion": [
+      10,
+      12,
+      14
+    ],
+    "edef": [
+      10,
+      12,
+      14
+    ],
+    "save": [
+      12,
+      14,
+      16
+    ],
+    "skills": [
+      1,
+      2,
+      3
+    ]
+  },
+  "structure": 1,
+  "stress": 1,
+  "hpPerPlayer": 5,
+  "role": "biological",
+  "classSizes": [
+    {
+      "classSize": 1,
+      "layers": 3
+    },
+    {
+      "classSize": 2,
+      "layers": 4
+    },
+    {
+      "classSize": 3,
+      "layers": 5
+    }
+  ]
+}

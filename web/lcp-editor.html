@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>LCP Editor</title>
+    <link rel="stylesheet" href="./lcp-editor.css" />
+</head>
+<body class="page-grid">
+<div class="lcp-editor">
+  <header class="topbar">
+    <span>LCP EDITOR</span>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="library">Library</button>
+      <button class="tab-btn" data-tab="editor" id="tab-editor" autocomplete="off" disabled>Editor</button>
+      <button class="tab-btn" data-tab="export" id="tab-export" autocomplete="off" disabled>Export</button>
+    </div>
+  </header>
+  <main class="editor-main">
+    <section id="view-library" class="view-section active">
+      <div class="library-container">
+        <div class="library-section">
+          <div class="section-header-row">
+            <h2>Your Drafts</h2>
+            <div class="section-actions">
+              <label class="btn-small">
+                Upload .lcp / .zip
+                <input type="file" id="upload-zip" accept=".lcp,.zip" hidden>
+              </label>
+              <button class="btn-small" id="btn-new-pack">New Pack</button>
+              <button class="btn-small hidden" id="btn-create-eidolon">New Eidolon</button>
+            </div>
+          </div>
+          <div class="resource-note">
+            <p class="resource-box resource-callout">The editor pulls data from all installed packs for reference and import and likely won't function properly without the <a href="https://github.com/massif-press/lancer-data" target="_blank" rel="noopener">core lancer data</a>. v3 zip <a href="https://github.com/massif-press/lancer-data/releases" target="_blank" rel="noopener">download</a>, v2 zip <a href="https://github.com/massif-press/lancer-data/releases?page=6#release-2.0.35" target="_blank" rel="noopener">download</a>. The Lancer Core NPCs pack included with the purchase of the book is recommended as well for NPC creation reference.</p>
+            <p>Where to find Packs: <a href="https://massif-press.itch.io/" target="_blank" rel="noopener">massif-press.itch.io</a>. COMP/CON reads v2/v3. Foundry reads v2. Wallflower NPC LCP unlocks the experimental Eidolon creator.</p>
+          </div>
+          <div id="local-drafts" class="library-list">No drafts found.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-editor" class="view-section">
+      <div class="editor-layout">
+        <div class="editor-sidebar" id="editor-sidebar">
+          <div class="rail-search">
+            <div class="rail-search-row">
+              <input type="text" id="pack-search-input" class="form-input" placeholder="Search" autocomplete="off">
+              <button type="button" class="panel-toggle" id="btn-toggle-rail" aria-expanded="true" aria-label="Collapse category list"><span class="chevron" aria-hidden="true">&#9664;</span></button>
+            </div>
+            <div id="pack-search-results" class="pack-search-results hidden"></div>
+          </div>
+          <nav class="editor-rail" id="category-rail">
+          </nav>
+        </div>
+
+        <aside class="master-list-pane hidden" id="master-list-pane">
+          <div class="master-header">
+            <h3 id="master-title">Items</h3>
+            <div class="master-header-actions">
+              <div class="master-actions">
+                <button class="btn-small" id="btn-import-item">Import</button>
+                <button class="btn-small" id="btn-add-item">+ New</button>
+              </div>
+              <button type="button" class="panel-toggle" id="btn-toggle-master" aria-expanded="true" aria-label="Collapse item list"><span class="chevron" aria-hidden="true">&#9664;</span></button>
+            </div>
+          </div>
+          <div class="master-search">
+            <input type="text" id="master-search-input" class="form-input" placeholder="Search items...">
+          </div>
+          <div class="master-list" id="master-list">
+          </div>
+        </aside>
+
+        <div class="editor-workspace detail-pane">
+          <div class="workspace-header">
+            <h3 id="workspace-title">Manifest</h3>
+            <div class="workspace-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+              <div id="validation-badge" class="validation-badge hidden"></div>
+              <button id="btn-toggle-json" class="btn-small">{} JSON</button>
+            </div>
+          </div>
+          <div id="parts-strip" class="parts-strip hidden"></div>
+          <div class="workspace-content" id="form-container">
+          </div>
+          <div class="workspace-content hidden" id="json-container" style="display: flex; flex-direction: column; height: 100%;">
+            <textarea id="json-textarea" class="code-editor" style="flex: 1; min-height: 300px; margin-bottom: 1rem;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+              <button id="btn-save-json" class="btn-primary">Apply JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-export" class="view-section">
+      <div class="export-convert-container">
+        <div class="detail-panel">
+          <h2 class="panel-label">Export</h2>
+          <div class="export-meta">
+            <div class="meta-row"><strong>Name:</strong> <span id="export-name">-</span></div>
+            <div class="meta-row"><strong>Version:</strong> <span id="export-version">-</span></div>
+          </div>
+          <div id="export-problems" class="export-problems"></div>
+          <div id="export-notices" class="export-problems"></div>
+          <button id="btn-export" class="btn-primary">Download .lcp</button>
+        </div>
+
+        <div class="detail-panel">
+          <h2 class="panel-label">Convert</h2>
+          <div class="export-meta">
+            <div class="meta-row"><strong>Source:</strong> <span id="convert-source">-</span></div>
+            <div class="meta-row"><strong>Target:</strong> <span id="convert-target">-</span></div>
+          </div>
+          <div id="convert-report" class="convert-report"></div>
+          <button id="btn-convert" class="btn-primary">Create Converted Draft</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="part-picker" class="modal-overlay hidden">
+  <div class="modal-content part-picker">
+    <h2 id="part-picker-title">Section</h2>
+    <input type="text" id="part-picker-filter" class="form-input part-picker-filter" placeholder="Filter" autocomplete="off">
+    <div id="part-picker-body" class="part-picker-body"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-part-cancel">Cancel</button>
+      <button class="btn-primary hidden" id="btn-part-confirm">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="reference-datalists" hidden></div>
+
+<div id="import-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Import Item</h2>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label class="form-label">Category</label>
+      <select id="import-category-select" class="form-input"></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Source Draft</label>
+      <select id="import-draft-select" class="form-input"></select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Item to Import</label>
+      <select id="import-item-select" class="form-input"></select>
+    </div>
+
+    <div id="import-summary" class="import-summary"></div>
+    <div id="import-closure" class="import-closure hidden"></div>
+
+    <div class="form-group">
+      <label class="field-check"><input type="checkbox" id="import-with-deps" checked> Include dependencies</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-import-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-import-confirm">Import Item</button>
+    </div>
+  </div>
+</div>
+
+<div id="eidolon-target-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>New Eidolon</h2>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label class="form-label">Target Pack</label>
+      <select id="eidolon-target-select" class="form-input"></select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-eidolon-target-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-eidolon-target-confirm">Open</button>
+    </div>
+  </div>
+</div>
+
+<div id="assembler-modal" class="modal-overlay hidden">
+  <div class="modal-content assembler">
+    <h2>Assemble Eidolon</h2>
+
+    <div class="form-group" style="margin-top: 1rem;">
+      <label class="form-label" for="assembler-name">Name</label>
+      <input type="text" id="assembler-name" class="form-input" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="assembler-class">Class</label>
+      <select id="assembler-class" class="form-input"></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Layers</label>
+      <div id="assembler-slots" class="assembler-slots"></div>
+    </div>
+
+    <div id="assembler-summary" class="import-summary"></div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-assemble-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-assemble-confirm">Generate</button>
+    </div>
+  </div>
+</div>
+
+<div id="format-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Pack Format</h2>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-format-cancel">Cancel</button>
+      <button class="btn-secondary" id="btn-format-v2">v2</button>
+      <button class="btn-primary" id="btn-format-v3">v3</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Confirm</h2>
+    <p id="confirm-message">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-confirm-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-confirm-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="prompt-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Enter Value</h2>
+    <p id="prompt-message"></p>
+    <div class="form-group" style="margin-top: 1rem;">
+      <input type="text" id="prompt-input" class="form-input" autocomplete="off" list="dl-prompt-keys">
+      <datalist id="dl-prompt-keys"></datalist>
+    </div>
+    <div class="form-group" id="prompt-type-group" style="display: none;">
+      <label class="form-label">Type</label>
+      <select id="prompt-type-select" class="form-input">
+        <option value="string">String</option>
+        <option value="number">Number</option>
+        <option value="boolean">Boolean</option>
+        <option value="object">Object</option>
+        <option value="array">Array</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-prompt-cancel">Cancel</button>
+      <button class="btn-primary" id="btn-prompt-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="error-toast" class="error-toast hidden"></div>
+
+<script type="module" src="./lcp-editor.js"></script>
+</body>
+</html>
