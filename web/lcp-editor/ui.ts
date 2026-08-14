@@ -2096,7 +2096,7 @@ function filterPartPicker() {
 }
 
 function tagRow(id: string): HTMLElement {
-  const def = tagDefs.get(id);
+  const def = tagDefFor(id);
   const row = document.createElement('label');
   row.className = 'part-check';
   row.dataset.search = `${id} ${def?.name ?? ''} ${def?.description ?? ''}`;

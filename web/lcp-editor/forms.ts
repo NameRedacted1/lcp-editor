@@ -546,12 +546,27 @@ function localTagDefs(): Map<string, TagDef> {
   return out;
 }
 
+// npc packs reference these but no published core data defines them, so the editor names them
+const NPC_TAG_NAMES: Record<string, string> = {
+  tg_npc_trait: 'NPC Trait',
+  tg_npc_system: 'NPC System',
+  tg_npc_weapon: 'NPC Weapon',
+  tg_npc_tech: 'NPC Tech',
+  tg_npc_reaction: 'NPC Reaction',
+};
+
+const NPC_TAG_CATEGORY = 'npc_features.json';
+
 export function tagDefFor(id: string): TagDef | undefined {
   const indexed = tagDefs.get(id);
   if (indexed !== undefined && indexed.name !== '') return indexed;
   const local = localTagDefs().get(id);
+  const hasVal = local?.hasVal === true || indexed?.hasVal === true;
+  if (local !== undefined && local.name !== '') return { ...local, hasVal };
+  const named = NPC_TAG_NAMES[id];
+  if (named !== undefined) return { id, name: named, description: local?.description ?? '', hasVal };
   if (local === undefined) return indexed;
-  return { ...local, hasVal: local.hasVal || indexed?.hasVal === true };
+  return { ...local, hasVal };
 }
 
 function knownTags(): TagDef[] {
@@ -563,6 +578,13 @@ function knownTags(): TagDef[] {
   }
   for (const id of referenceIndex.tagIds ?? []) {
     if (!out.has(id)) out.set(id, { id, name: '', description: '', hasVal: false });
+  }
+  if (currentCategory === NPC_TAG_CATEGORY) {
+    for (const [id, name] of Object.entries(NPC_TAG_NAMES)) {
+      const prev = out.get(id);
+      if (prev !== undefined && prev.name !== '') continue;
+      out.set(id, { id, name, description: prev?.description ?? '', hasVal: prev?.hasVal === true });
+    }
   }
   return Array.from(out.values()).sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
 }
