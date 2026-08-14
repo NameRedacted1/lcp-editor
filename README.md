@@ -14,9 +14,9 @@ Node >= 22.
 
 ```
 npm install
-npm run build
-npm run test
 npm run typecheck
+npm run test
+npm run build
 ```
 
 `dist` is the site root - serve it directly with any static file server.
