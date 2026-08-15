@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -148,7 +148,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
   'talents.json': lay('t', [
     ['Identity', [txt('name', { wide: true }), ident('id'), txt('icon'), txt('icon_url', { wide: true, optional: true }), txt('terse', { wide: true })]],
     ['Description', [area('description')]],
-    ['Ranks', [rows('ranks', NAME_DESC_EXTRA_COLUMNS)]],
+    ['Ranks', [rows('ranks', TALENT_RANK_COLUMNS)]],
   ]),
   'npc_features.json': lay('npcf', [
     ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'featureTypes'), chk('base'), f('origin')]],
@@ -529,10 +529,71 @@ interface CommitOptions {
   rerender?: boolean;
 }
 
+const TALENT_EQUIPMENT_FILES = ['weapons.json', 'systems.json'];
+const RANK_GRANT_KEYS = ['integrated', 'special_equipment'];
+
+// equipment declares talent, talent ranks list gear
+export function syncTalentEquipment(pack: PackDraft): void {
+  const talents = pack.data['talents.json'];
+  if (!Array.isArray(talents)) return;
+  const talentById = new Map<string, any>();
+  for (const talent of talents) {
+    if (isPlainObject(talent) && asText(talent.id) !== '') talentById.set(asText(talent.id), talent);
+  }
+  if (talentById.size === 0) return;
+
+  const itemsById = new Map<string, any>();
+  for (const file of TALENT_EQUIPMENT_FILES) {
+    const items = pack.data[file];
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      if (!isPlainObject(item) || asText(item.id) === '') continue;
+      itemsById.set(asText(item.id), item);
+      const talent = talentById.get(asText(item.talent_id));
+      const rank = Number(item.talent_rank);
+      if (talent === undefined || !Number.isInteger(rank) || rank < 1) continue;
+      const ranks = Array.isArray(talent.ranks) ? talent.ranks : [];
+      if (rank > ranks.length || !isPlainObject(ranks[rank - 1])) continue;
+      const id = asText(item.id);
+      for (const [idx, entry] of ranks.entries()) {
+        if (idx === rank - 1 || !isPlainObject(entry)) continue;
+        for (const key of RANK_GRANT_KEYS) {
+          if (!Array.isArray(entry[key]) || !entry[key].includes(id)) continue;
+          entry[key] = entry[key].filter((ref: any) => ref !== id);
+          if (entry[key].length === 0) delete entry[key];
+        }
+      }
+      const home = ranks[rank - 1];
+      if (!RANK_GRANT_KEYS.some((key) => Array.isArray(home[key]) && home[key].includes(id))) {
+        if (!Array.isArray(home.special_equipment)) home.special_equipment = [];
+        home.special_equipment.push(id);
+      }
+    }
+  }
+
+  for (const talent of talentById.values()) {
+    const ranks = Array.isArray(talent.ranks) ? talent.ranks : [];
+    for (const [idx, entry] of ranks.entries()) {
+      if (!isPlainObject(entry)) continue;
+      for (const key of RANK_GRANT_KEYS) {
+        if (!Array.isArray(entry[key])) continue;
+        for (const ref of entry[key]) {
+          const item = itemsById.get(asText(ref));
+          if (item === undefined || asText(item.talent_id) !== '') continue;
+          item.talent_id = asText(talent.id);
+          item.talent_rank = idx + 1;
+          item.talent_item = true;
+        }
+      }
+    }
+  }
+}
+
 function commitDesigned(options: CommitOptions = {}) {
   if (!currentPack || !currentCategory) return;
   attachTouchedSlots();
   regenerateNpcFeatureArrays(currentPack);
+  syncTalentEquipment(currentPack);
   if (currentCategory === 'lcp_manifest.json') {
     const manifest = currentPack.data[currentCategory];
     if (manifest !== null && typeof manifest === 'object') {

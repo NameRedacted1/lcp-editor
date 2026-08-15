@@ -273,6 +273,15 @@ export const NAME_DESC_EXTRA_COLUMNS: FieldSpec[] = [
   { key: 'bonuses', label: 'Bonus', kind: 'rows', wide: true, optional: true, addLabel: '+ Bonus', columns: SYSTEM_BONUS_COLUMNS },
   { key: 'synergies', label: 'Synergy', kind: 'rows', wide: true, optional: true, addLabel: '+ Synergy', columns: SYNERGY_COLUMNS },
   { key: 'active_effects', label: 'Active Effect', kind: 'rows', wide: true, optional: true, addLabel: '+ Active Effect', columns: ACTIVE_EFFECT_COLUMNS },
+  { key: 'deployables', label: 'Deployable', kind: 'rows', wide: true, optional: true, addLabel: '+ Deployable', columns: DEPLOYABLE_COLUMNS },
+  { key: 'counters', label: 'Counter', kind: 'rows', wide: true, optional: true, addLabel: '+ Counter', columns: COUNTER_COLUMNS },
+  { key: 'integrated', label: 'Integrated', kind: 'stringlist', wide: true, optional: true, addLabel: '+ Integrated' },
+  { key: 'special_equipment', label: 'Special Equipment', kind: 'stringlist', wide: true, optional: true, addLabel: '+ Special Equipment' },
+];
+
+export const TALENT_RANK_COLUMNS: FieldSpec[] = [
+  ...NAME_DESC_EXTRA_COLUMNS,
+  { key: 'exclusive', label: 'Exclusive', kind: 'checkbox', optional: true },
 ];
 
 export const TABLE_RESULT_COLUMNS: FieldSpec[] = [
