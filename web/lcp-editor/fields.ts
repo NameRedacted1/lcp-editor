@@ -121,6 +121,7 @@ export const NPC_BONUS_CELLS = [
 
 const STAT_LABEL_OVERRIDES: Record<string, string> = {
   hp: 'HP',
+  hp_bonus: 'HP Bonus',
   sp: 'SP',
   edef: 'E-Defense',
   evade: 'Evade',
@@ -389,4 +390,10 @@ export const BOND_POWER_COLUMNS: FieldSpec[] = [
   { key: 'prerequisite', label: 'Prerequisite', kind: 'textarea', wide: true, optional: true },
   { key: 'master', label: 'Master Power', kind: 'checkbox', optional: true },
   { key: 'veteran', label: 'Veteran Power', kind: 'checkbox', optional: true },
+];
+
+export const VERSION_HISTORY_COLUMNS: FieldSpec[] = [
+  { key: 'version', label: 'Version', kind: 'text' },
+  { key: 'date', label: 'Date', kind: 'text' },
+  { key: 'changes', label: 'Change', kind: 'stringlist', wide: true, addLabel: '+ Change' },
 ];

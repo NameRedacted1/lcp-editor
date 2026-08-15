@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, BONUS_DAMAGE_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_BONUS_CELLS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, BONUS_DAMAGE_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_BONUS_CELLS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VERSION_HISTORY_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -46,6 +46,7 @@ const ROW_LABELS: Record<string, string> = {
   questions: 'Question',
   powers: 'Power',
   results: 'Result',
+  version_history: 'Entry',
 };
 
 function labelFor(kind: FieldKind, key: string): string {
@@ -279,7 +280,8 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Table', [f('group', 'table', { optional: true, fields: [txt('detail', { wide: true }), txt('die'), rows('results', DOWNTIME_RESULT_COLUMNS)] })]],
   ]),
   'lcp_manifest.json': lay('', [
-    ['Pack Info', [txt('name', { wide: true }), txt('author'), txt('version'), txt('item_prefix'), f('format', 'v3'), txt('website', { wide: true }), area('description')]],
+    ['Pack Info', [txt('name', { wide: true }), txt('author'), txt('version'), txt('item_prefix'), f('format', 'v3'), txt('website', { wide: true }), txt('image_url', { wide: true }), area('description')]],
+    ['Version History', [rows('version_history', VERSION_HISTORY_COLUMNS, { optional: true })]],
   ], { singleton: true }),
   };
   return categoryLayoutsCache;
@@ -360,6 +362,15 @@ const V2_CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Add Resist', [rows('add_resist', ADD_RESIST_COLUMNS, { optional: true })]],
     ['Add Other', [rows('add_other', ADD_OTHER_COLUMNS, { optional: true })]],
     ['Flags', [chk('deprecated')]],
+  ]),
+  'pilot_gear.json': lay('pg', [
+    ['Identity', [txt('name', { wide: true }), ident('id'), sel('type', 'gearTypes')]],
+    ['Tags', [f('tags')]],
+    ['Description', [area('description')]],
+    ['Stats', [f('number', 'hp_bonus', { optional: true }), f('number', 'armor', { optional: true }), f('number', 'evasion', { optional: true }), f('number', 'edef', { optional: true }), f('number', 'speed', { optional: true }), f('number', 'uses', { optional: true })]],
+    ['Weapon', [f('damage', 'damage', { optional: true }), f('range', 'range', { optional: true }), area('effect', { optional: true })]],
+    ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
+    ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
   ]),
   'manufacturers.json': lay('', [
     ['Identity', [txt('name', { wide: true }), ident('id')]],
