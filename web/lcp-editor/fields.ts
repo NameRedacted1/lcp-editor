@@ -191,6 +191,8 @@ export const ADD_STATUS_COLUMNS: FieldSpec[] = [
   { key: 'id', label: 'Status', kind: 'text', list: 'statusIds' },
   { key: 'duration', label: 'Duration', kind: 'text', optional: true },
   { key: 'save', label: 'Save', kind: 'text', optional: true },
+  { key: 'target', label: 'Target', kind: 'text', optional: true },
+  { key: 'aoe', label: 'AoE', kind: 'checkbox', optional: true },
 ];
 
 export const ADD_RESIST_COLUMNS: FieldSpec[] = [
@@ -225,11 +227,32 @@ export const ADD_EFFECT_ROW_COLUMNS: FieldSpec[] = [
   { key: 'add_other', label: 'Add Other', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Other', columns: ADD_OTHER_COLUMNS },
 ];
 
+export const ACTIVE_EFFECT_COLUMNS: FieldSpec[] = [
+  { key: 'name', label: 'Name', kind: 'text', wide: true },
+  { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
+  { key: 'condition', label: 'Condition', kind: 'text', optional: true },
+  { key: 'frequency', label: 'Frequency', kind: 'text', optional: true },
+  { key: 'duration', label: 'Duration', kind: 'text', optional: true },
+  { key: 'save', label: 'Save', kind: 'text', optional: true },
+  { key: 'attack', label: 'Attack', kind: 'text', optional: true },
+  { key: 'bonus_damage', label: 'Bonus Damage', kind: 'text', optional: true },
+  { key: 'trigger', label: 'Trigger', kind: 'textarea', wide: true, optional: true },
+  { key: 'damage', label: 'Damage', kind: 'damage', wide: true, addLabel: '+ Damage', optional: true },
+  { key: 'range', label: 'Range', kind: 'range', wide: true, addLabel: '+ Range', optional: true },
+  { key: 'add_status', label: 'Add Status', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Status', columns: ADD_STATUS_COLUMNS },
+  { key: 'remove_special', label: 'Remove Special', kind: 'stringlist', wide: true, optional: true, addLabel: '+ Remove Special' },
+  ...ADD_EFFECT_ROW_COLUMNS,
+];
+
 export const ACTION_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'activation', label: 'Activation', kind: 'select', vocab: 'activations' },
   { key: 'trigger', label: 'Trigger', kind: 'textarea', wide: true, optional: true },
   { key: 'frequency', label: 'Frequency', kind: 'text', optional: true },
+  { key: 'save', label: 'Save', kind: 'text', optional: true },
+  { key: 'attack', label: 'Attack', kind: 'text', optional: true },
+  { key: 'pilot', label: 'Pilot', kind: 'checkbox', optional: true },
+  { key: 'mech', label: 'Mech', kind: 'checkbox', optional: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
   { key: 'damage', label: 'Damage', kind: 'damage', wide: true, addLabel: '+ Damage', optional: true },
   { key: 'range', label: 'Range', kind: 'range', wide: true, addLabel: '+ Range', optional: true },
@@ -242,6 +265,8 @@ export const ACTION_COLUMNS: FieldSpec[] = [
     addLabel: '+ Add Status',
     columns: ADD_STATUS_COLUMNS,
   },
+  { key: 'remove_special', label: 'Remove Special', kind: 'stringlist', wide: true, optional: true, addLabel: '+ Remove Special' },
+  { key: 'active_effects', label: 'Active Effect', kind: 'rows', wide: true, optional: true, addLabel: '+ Active Effect', columns: ACTIVE_EFFECT_COLUMNS },
   ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
@@ -256,6 +281,9 @@ export const DEPLOYABLE_COLUMNS: FieldSpec[] = [
 export const SYNERGY_COLUMNS: FieldSpec[] = [
   { key: 'locations', label: 'Locations', kind: 'chips', vocab: 'synergyLocations', wide: true, optional: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
+  { key: 'weapon_types', label: 'Weapon Types', kind: 'chips', vocab: 'weaponTypes', wide: true, optional: true },
+  { key: 'weapon_sizes', label: 'Weapon Sizes', kind: 'chips', vocab: 'mounts', wide: true, optional: true },
+  { key: 'system_types', label: 'System Types', kind: 'chips', vocab: 'systemTypes', wide: true, optional: true },
 ];
 
 export const WEAPON_PROFILE_COLUMNS: FieldSpec[] = [
@@ -280,12 +308,13 @@ export const COUNTER_COLUMNS: FieldSpec[] = [
 export const SYSTEM_BONUS_COLUMNS: FieldSpec[] = [
   { key: 'id', label: 'ID', kind: 'text', list: 'bonusIds' },
   { key: 'val', label: 'Value', kind: 'text' },
-];
-
-export const ACTIVE_EFFECT_COLUMNS: FieldSpec[] = [
-  { key: 'name', label: 'Name', kind: 'text', wide: true },
-  { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
-  ...ADD_EFFECT_ROW_COLUMNS,
+  { key: 'accuracy', label: 'Accuracy', kind: 'number', optional: true },
+  { key: 'replace', label: 'Replace', kind: 'checkbox', optional: true },
+  { key: 'overwrite', label: 'Overwrite', kind: 'checkbox', optional: true },
+  { key: 'damage_types', label: 'Damage Types', kind: 'chips', vocab: 'damageTypes', wide: true, optional: true },
+  { key: 'range_types', label: 'Range Types', kind: 'chips', vocab: 'rangeTypes', wide: true, optional: true },
+  { key: 'weapon_types', label: 'Weapon Types', kind: 'chips', vocab: 'weaponTypes', wide: true, optional: true },
+  { key: 'weapon_sizes', label: 'Weapon Sizes', kind: 'chips', vocab: 'mounts', wide: true, optional: true },
 ];
 
 export const NAME_DESC_EXTRA_COLUMNS: FieldSpec[] = [
