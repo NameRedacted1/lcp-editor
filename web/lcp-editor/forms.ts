@@ -1,5 +1,5 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_BONUS_CELLS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, BONUS_DAMAGE_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_BONUS_CELLS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
@@ -127,6 +127,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
+    ['Bonus Damage', [rows('bonus_damage', BONUS_DAMAGE_COLUMNS, { optional: true })]],
     ['Talent Link', [txt('talent_id', { list: 'talentIds', optional: true }), f('number', 'talent_rank', { optional: true }), chk('talent_item', { optional: true })]],
     ['Flags', [chk('no_attack'), chk('no_mods'), chk('no_core_bonus'), chk('no_synergies')]],
   ]),
@@ -2588,6 +2589,10 @@ function listEditor<T>(spec: FieldSpec, owner: any, list: any[], editor: ListEdi
 }
 
 function buildObjectRows(spec: FieldSpec, owner: any, path: (string | number)[], fieldId: string): HTMLElement {
+  const existing = owner[spec.key];
+  if (existing !== undefined && existing !== null && !Array.isArray(existing)) {
+    return buildSlotFallback(spec, owner, path, fieldId);
+  }
   const columns = spec.columns ?? NAME_DESC_COLUMNS;
   const list: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
   return listEditor(spec, owner, list, {

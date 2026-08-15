@@ -227,6 +227,14 @@ export const ADD_EFFECT_ROW_COLUMNS: FieldSpec[] = [
   { key: 'add_other', label: 'Add Other', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Other', columns: ADD_OTHER_COLUMNS },
 ];
 
+export const BONUS_DAMAGE_COLUMNS: FieldSpec[] = [
+  { key: 'val', label: 'Value', kind: 'text' },
+  { key: 'hit_type', label: 'Hit Type', kind: 'text', optional: true },
+  { key: 'detail', label: 'Detail', kind: 'textarea', wide: true, optional: true },
+  { key: 'weapon_types', label: 'Weapon Types', kind: 'chips', vocab: 'weaponTypes', wide: true, optional: true },
+  { key: 'weapon_sizes', label: 'Weapon Sizes', kind: 'chips', vocab: 'mounts', wide: true, optional: true },
+];
+
 export const ACTIVE_EFFECT_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true },
@@ -235,7 +243,7 @@ export const ACTIVE_EFFECT_COLUMNS: FieldSpec[] = [
   { key: 'duration', label: 'Duration', kind: 'text', optional: true },
   { key: 'save', label: 'Save', kind: 'text', optional: true },
   { key: 'attack', label: 'Attack', kind: 'text', optional: true },
-  { key: 'bonus_damage', label: 'Bonus Damage', kind: 'text', optional: true },
+  { key: 'bonus_damage', label: 'Bonus Damage', kind: 'rows', wide: true, optional: true, addLabel: '+ Bonus Damage', columns: BONUS_DAMAGE_COLUMNS },
   { key: 'trigger', label: 'Trigger', kind: 'textarea', wide: true, optional: true },
   { key: 'damage', label: 'Damage', kind: 'damage', wide: true, addLabel: '+ Damage', optional: true },
   { key: 'range', label: 'Range', kind: 'range', wide: true, addLabel: '+ Range', optional: true },

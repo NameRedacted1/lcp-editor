@@ -1,5 +1,5 @@
 import * as fflate from 'fflate';
-import { currentPack, currentCategory, EIDOLON_LAYERS, MAX_ARCHIVE_DEPTH, DiscoveredPack, PACK_ARRAY_FILES, PACK_MANIFEST, PackData, PackDraft, PackFormat, V2_CLASS_POWER, V2_TEMPLATE_POWER, categoryTitle, chooseFormat, closeModal, currentFormat, customConfirm, esc, fillOptions, getDrafts, itemValidationErrors, manifestIsDecisive, openDraft, packFormatOf, renderLibrary, saveDraftOrToast, showModal, showToast, stampFormat, REF_WALK_DEPTH } from './state.js';
+import { currentPack, currentCategory, EIDOLON_LAYERS, MAX_ARCHIVE_DEPTH, DiscoveredPack, PACK_ARRAY_FILES, PACK_MANIFEST, PackData, PackDraft, PackFormat, V2_CLASS_POWER, V2_TEMPLATE_POWER, categoryTitle, chooseFormat, closeModal, currentFormat, customConfirm, esc, fillOptions, formatOfManifest, getDrafts, itemValidationErrors, manifestIsDecisive, openDraft, packFormatOf, renderLibrary, saveDraftOrToast, showModal, showToast, stampFormat, REF_WALK_DEPTH } from './state.js';
 import { ID_ENTRY_ARRAY_KEYS, ID_SCALAR_KEYS, ID_STRING_ARRAY_KEYS, OWNER_KIND_BY_FILE, OwnerKeySnapshot, OwnerKind, asText, deriveFeatureLinks, flushPackSave, featureClaimsOwner, featureIsBase, firstFreeId, isPlainObject, slugifyName, statusIdFor, ownerKeysFor, regenerateNpcFeatureArrays, retargetFeatureOrigin } from './forms.js';
 import { switchTab, selectItem, catCount, catItems, importableCategoryOptions, NPC_CATEGORY_BY_KIND, isListCategory, itemAt, joinParts, libraryDrafts, npcAggregateFiles, npcKindOf, railCategories, renderEditorRail, selectCategory, slotIndexOf, standardListFor, validateCurrentPack } from './ui.js';
 import { V2_TIER_CELLS, v2Bonuses, V2_FOLDED_FEATURE_KEYS, v2DamageText, v2EffectText, v2FeatureType, v2OnHit, v2StatusText, v2TierCells, v2TierValue } from './v2.js';
@@ -80,6 +80,47 @@ export function collectArchiveJson(
   }
 }
 
+// legacy keyed stat objects folded into bonuses
+const BONUS_ID_ALIASES: Record<string, string> = {
+  agi: 'agility',
+  eng: 'engineering',
+  evade: 'evasion',
+  sensors: 'sensor',
+  sys: 'systems',
+};
+
+function bonusIdFor(key: string): string {
+  const norm = key.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return BONUS_ID_ALIASES[norm] ?? norm;
+}
+
+export function foldKeyedBonusEntries(item: any): number {
+  const plans: [string, Record<string, boolean>][] = [
+    ['bonus', {}],
+    ['override', { overwrite: true }],
+    ['replace', { replace: true }],
+  ];
+  const extra: any[] = [];
+  for (const [key, flags] of plans) {
+    const obj = item[key];
+    if (!isPlainObject(obj)) continue;
+    for (const [stat, val] of Object.entries(obj)) extra.push({ id: bonusIdFor(stat), val, ...flags });
+    delete item[key];
+  }
+  if (extra.length === 0) return 0;
+  item.bonuses = [...(Array.isArray(item.bonuses) ? item.bonuses : []), ...extra];
+  return extra.length;
+}
+
+export function foldKeyedBonuses(data: PackData): void {
+  if (formatOfManifest(data[PACK_MANIFEST]) !== 'v3') return;
+  const list = data[NPC_FEATURE_FILE];
+  if (!Array.isArray(list)) return;
+  for (const item of list) {
+    if (isPlainObject(item)) foldKeyedBonusEntries(item);
+  }
+}
+
 // core ships statuses named but unidentified. every ref is by id, so derive them on the way in
 function fillStatusIds(data: PackData): void {
   const list = data['statuses.json'];
@@ -123,6 +164,7 @@ export function discoverPacks(entries: Map<string, Uint8Array>): DiscoveredPack[
       Object.entries(data).some(([base, value]) => PACK_ARRAY_FILES.has(base) && Array.isArray(value));
     if (!qualifies) continue;
     fillStatusIds(data);
+    foldKeyedBonuses(data);
     packs.push({ dir, data });
   }
 
@@ -1747,6 +1789,14 @@ export function planConversion(pack: PackDraft, target: PackFormat): ConversionP
   }
 
   if (aggregateFiles.size > 0) foldAggregateNpcFiles(pack.data, aggregateFiles, data, target, tally, owners, features);
+
+  if (target === 'v3' && Array.isArray(data[NPC_FEATURE_FILE])) {
+    let folded = 0;
+    for (const item of data[NPC_FEATURE_FILE]) {
+      if (isPlainObject(item)) folded += foldKeyedBonusEntries(item);
+    }
+    if (folded > 0) tally.note('transformed', `${NPC_FEATURE_FILE} keyed bonus/override/replace to bonuses rows`, folded);
+  }
 
   return { source, target, rows: tally.rows(), data };
 }
