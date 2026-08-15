@@ -278,11 +278,41 @@ export const ACTION_COLUMNS: FieldSpec[] = [
   ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
+export const COUNTER_COLUMNS: FieldSpec[] = [
+  { key: 'id', label: 'ID', kind: 'text' },
+  { key: 'name', label: 'Name', kind: 'text' },
+  { key: 'min', label: 'Min', kind: 'number', optional: true },
+  { key: 'max', label: 'Max', kind: 'number', optional: true },
+  { key: 'default_value', label: 'Default', kind: 'number', optional: true },
+];
+
 export const DEPLOYABLE_COLUMNS: FieldSpec[] = [
   { key: 'name', label: 'Name', kind: 'text', wide: true },
   { key: 'type', label: 'Type', kind: 'text', optional: true },
   { key: 'activation', label: 'Activation', kind: 'select', vocab: 'activations', optional: true },
+  { key: 'deactivation', label: 'Deactivation', kind: 'select', vocab: 'activations', optional: true },
+  { key: 'recall', label: 'Recall', kind: 'select', vocab: 'activations', optional: true },
+  { key: 'redeploy', label: 'Redeploy', kind: 'select', vocab: 'activations', optional: true },
+  { key: 'frequency', label: 'Frequency', kind: 'text', optional: true },
+  { key: 'size', label: 'Size', kind: 'number', optional: true },
+  { key: 'size_special', label: 'Size Special', kind: 'text', optional: true },
+  { key: 'hp', label: 'HP', kind: 'text', optional: true },
+  { key: 'armor', label: 'Armor', kind: 'number', optional: true },
+  { key: 'evasion', label: 'Evasion', kind: 'text', optional: true },
+  { key: 'edef', label: 'E-Defense', kind: 'text', optional: true },
+  { key: 'heatcap', label: 'Heat Cap', kind: 'number', optional: true },
+  { key: 'speed', label: 'Speed', kind: 'text', optional: true },
+  { key: 'save', label: 'Save', kind: 'text', optional: true },
+  { key: 'instances', label: 'Instances', kind: 'number', optional: true },
+  { key: 'cost', label: 'Cost', kind: 'number', optional: true },
+  { key: 'attack_bonus', label: 'Attack Bonus', kind: 'tierscalar', optional: true },
   { key: 'detail', label: 'Detail', kind: 'textarea', wide: true, optional: true },
+  { key: 'damage', label: 'Damage', kind: 'damage', wide: true, addLabel: '+ Damage', optional: true },
+  { key: 'range', label: 'Range', kind: 'range', wide: true, addLabel: '+ Range', optional: true },
+  { key: 'tags', label: 'Tags', kind: 'tags', wide: true, optional: true },
+  { key: 'actions', label: 'Action', kind: 'rows', wide: true, optional: true, addLabel: '+ Action', columns: ACTION_COLUMNS },
+  { key: 'counters', label: 'Counter', kind: 'rows', wide: true, optional: true, addLabel: '+ Counter', columns: COUNTER_COLUMNS },
+  { key: 'add_status', label: 'Add Status', kind: 'rows', wide: true, optional: true, addLabel: '+ Add Status', columns: ADD_STATUS_COLUMNS },
   ...ADD_EFFECT_ROW_COLUMNS,
 ];
 
@@ -303,14 +333,6 @@ export const WEAPON_PROFILE_COLUMNS: FieldSpec[] = [
   { key: 'on_hit', label: 'On Hit', kind: 'textarea', wide: true, optional: true },
   { key: 'on_crit', label: 'On Crit', kind: 'textarea', wide: true, optional: true },
   { key: 'tags', label: 'Tags', kind: 'tags', wide: true, optional: true },
-];
-
-export const COUNTER_COLUMNS: FieldSpec[] = [
-  { key: 'id', label: 'ID', kind: 'text' },
-  { key: 'name', label: 'Name', kind: 'text' },
-  { key: 'min', label: 'Min', kind: 'number', optional: true },
-  { key: 'max', label: 'Max', kind: 'number', optional: true },
-  { key: 'default_value', label: 'Default', kind: 'number', optional: true },
 ];
 
 export const SYSTEM_BONUS_COLUMNS: FieldSpec[] = [

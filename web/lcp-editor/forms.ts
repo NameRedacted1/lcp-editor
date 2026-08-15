@@ -770,7 +770,7 @@ function buildVocabCombo(
 }
 
 function fieldBindsPlainText(spec: FieldSpec): boolean {
-  return spec.kind === 'textarea';
+  return spec.kind === 'textarea' || spec.kind === 'text';
 }
 
 function structuredValuePresent(owner: any, key: string): boolean {
