@@ -1330,6 +1330,12 @@ details.array-item:hover > summary .array-item-header-actions {
   font-size: 0.78rem;
 }
 
+.chip-tiers {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+}
+
 .chip-val {
   min-width: 3ch;
   max-width: 16ch;

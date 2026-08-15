@@ -33,6 +33,7 @@ export type FieldKind =
   | 'rows'
   | 'stringlist'
   | 'stats'
+  | 'bonusgrid'
   | 'tiers'
   | 'tierscalar'
   | 'count'
@@ -96,6 +97,26 @@ export const NPC_STAT_CELLS = [
   { key: 'engineering', label: 'Engineering' },
   { key: 'size', label: 'Size' },
   { key: 'activations', label: 'Activations' },
+];
+
+export const NPC_BONUS_CELLS = [
+  { key: 'hp', label: 'HP' },
+  { key: 'armor', label: 'Armor' },
+  { key: 'structure', label: 'Structure' },
+  { key: 'stress', label: 'Stress' },
+  { key: 'heatcap', label: 'Heat Cap' },
+  { key: 'evasion', label: 'Evasion' },
+  { key: 'edef', label: 'E-Defense' },
+  { key: 'speed', label: 'Speed' },
+  { key: 'sensor', label: 'Sensors' },
+  { key: 'save', label: 'Save' },
+  { key: 'hull', label: 'Hull' },
+  { key: 'agility', label: 'Agility' },
+  { key: 'systems', label: 'Systems' },
+  { key: 'engineering', label: 'Engineering' },
+  { key: 'size', label: 'Size' },
+  { key: 'activations', label: 'Activations' },
+  { key: 'attack', label: 'Attack Bonus' },
 ];
 
 const STAT_LABEL_OVERRIDES: Record<string, string> = {

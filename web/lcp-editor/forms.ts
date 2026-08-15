@@ -1,9 +1,9 @@
 import { currentPack, currentCategory, PACK_MANIFEST, PackDraft, EIDOLON_LAYERS, PackFormat, REFERENCE_DATALIST_IDS, confirmDiscardJsonEdits, currentFormat, currentItemIndex, customConfirm, formatOfManifest, packFormatOf, persistDraft, referenceIndex, validateItem, REF_WALK_DEPTH } from './state.js';
-import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
+import { humanizeKey, FieldSpec, ACTIVE_EFFECT_COLUMNS, ADD_OTHER_COLUMNS, ADD_RESIST_COLUMNS, ADD_SPECIAL_COLUMNS, ADD_STATUS_COLUMNS, BOND_POWER_COLUMNS, BOND_QUESTION_COLUMNS, ACTION_COLUMNS, COUNTER_COLUMNS, DEPLOYABLE_COLUMNS, DOWNTIME_RESULT_COLUMNS, FRAME_STAT_CELLS, V2_FRAME_STAT_CELLS, FieldKind, IDENTITY_FIELDS, LayoutSpec, NAME_DESC_COLUMNS, NAME_DESC_EXTRA_COLUMNS, NPC_BONUS_CELLS, NPC_STAT_CELLS, ReferenceBlock, SYNERGY_COLUMNS, SYSTEM_BONUS_COLUMNS, TABLE_RESULT_COLUMNS, TALENT_RANK_COLUMNS, VocabKey, WEAPON_PROFILE_COLUMNS } from './fields.js';
 import { EIDOLON_FEATURE_COLUMNS, EIDOLON_REFERENCE, eidolonFeatureIdBase, eidolonFeatureSeed } from './eidolon.js';
 import { selectItem, TagDef, ItemRef, catCount, catItems, clearDragOver, clip, containerFor, dragSourceIndex, dropTargetIndex, isListCategory, itemAt, itemRefs, moveArrayItem, paintDragOver, refreshPreview, renderDetailForm, renderMasterList, renderRecursiveForm, reorderCategoryItem, selectCategory, slotIndexOf, standardListFor, tagDefs, tagEntryFor, validateCurrentItemScoped, validateCurrentPack, wireDragReorder } from './ui.js';
 
-const WIDE_KINDS: ReadonlySet<string> = new Set(['chips', 'damage', 'derived', 'group', 'origin', 'range', 'rows', 'stats', 'stringlist', 'tags', 'textarea', 'tiers']);
+const WIDE_KINDS: ReadonlySet<string> = new Set(['bonusgrid', 'chips', 'damage', 'derived', 'group', 'origin', 'range', 'rows', 'stats', 'stringlist', 'tags', 'textarea', 'tiers']);
 const ROW_KINDS: ReadonlySet<string> = new Set(['damage', 'range', 'rows', 'stringlist']);
 const LABEL_OVERRIDES: Record<string, string> = {
   id: 'ID',
@@ -158,7 +158,7 @@ const CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Counters', [rows('counters', COUNTER_COLUMNS, { optional: true })]],
     ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
-    ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
+    ['Bonuses', [f('bonusgrid', 'bonuses', { cells: NPC_BONUS_CELLS })]],
     ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
     ['Flags', [chk('deprecated'), chk('hide_active')]],
@@ -352,6 +352,7 @@ const V2_CATEGORY_LAYOUTS = (): Record<string, LayoutSpec> => {
     ['Actions', [rows('actions', ACTION_COLUMNS, { optional: true })]],
     ['Active Effects', [rows('active_effects', ACTIVE_EFFECT_COLUMNS, { optional: true })]],
     ['Bonuses', [rows('bonuses', SYSTEM_BONUS_COLUMNS, { optional: true })]],
+    ['Stat Bonuses', [f('stats', 'bonus', { cells: NPC_STAT_CELLS })]],
     ['Synergies', [rows('synergies', SYNERGY_COLUMNS, { optional: true })]],
     ['Deployables', [rows('deployables', DEPLOYABLE_COLUMNS, { optional: true })]],
     ['Add Status', [rows('add_status', ADD_STATUS_COLUMNS, { optional: true, addLabel: '+ Add Status' })]],
@@ -892,6 +893,7 @@ function blankForKind(kind: FieldKind): any {
     case 'chips':
     case 'rows':
     case 'stringlist':
+    case 'bonusgrid':
       return [];
     case 'group':
     case 'stats':
@@ -1040,6 +1042,8 @@ function buildControl(
       return buildStringListControl(spec, owner, path, fieldId);
     case 'stats':
       return buildStatsGrid(spec, owner, path, fieldId);
+    case 'bonusgrid':
+      return buildBonusGrid(spec, owner, fieldId);
     case 'tiers':
       return buildTierGrid(spec, owner, path, fieldId);
     case 'tierscalar':
@@ -1424,6 +1428,17 @@ function tagChipVal(text: string): number | string {
   return Number.isNaN(Number(text)) ? text : Number(text);
 }
 
+const TIERED_TAG_CATEGORIES = new Set(['npc_features.json', 'eidolon_layers.json']);
+
+function tagTierParts(val: unknown): [string, string, string] {
+  const text = asText(val).trim();
+  const inner = text.startsWith('{') && text.endsWith('}') ? text.slice(1, -1) : text;
+  const parts = inner.split('/').map((part) => part.trim());
+  if (parts.length >= 3) return [parts[0], parts[1], parts[2]];
+  const flat = parts[0] ?? '';
+  return [flat, flat, flat];
+}
+
 function buildTagsControl(owner: any, key: string, fieldId?: string): HTMLElement {
   const host = document.createElement('div');
   host.className = 'tags-editor';
@@ -1436,8 +1451,39 @@ function buildTagsControl(owner: any, key: string, fieldId?: string): HTMLElemen
     const id = tagIdOf(entry);
     const def = tagDefFor(id);
     const carriesVal = def?.hasVal === true || (entry !== null && typeof entry === 'object' && entry.val !== undefined);
-    let value: HTMLInputElement | undefined;
-    if (carriesVal) {
+    let value: HTMLElement | undefined;
+    if (carriesVal && TIERED_TAG_CATEGORIES.has(currentCategory ?? '')) {
+      const wrap = document.createElement('span');
+      wrap.className = 'chip-tiers';
+      const parts = tagTierParts(entry !== null && typeof entry === 'object' ? entry.val : undefined);
+      const cells = parts.map((part, tier) => {
+        const cell = document.createElement('input');
+        cell.type = 'text';
+        cell.className = 'chip-val';
+        cell.setAttribute('aria-label', `${chipTagName(def, id)} value tier ${tier + 1}`);
+        cell.value = part || '1';
+        const fit = () => {
+          cell.style.width = `${Math.max(cell.value.length, 1) + 2}ch`;
+        };
+        fit();
+        cell.addEventListener('input', fit);
+        return cell;
+      });
+      const writeTiers = () => {
+        const target = entryObjectAt(list, idx);
+        if (target.id === undefined) target.id = id;
+        const vals = cells.map((cell) => cell.value.trim());
+        if (vals.every((part) => part === '')) delete target.val;
+        else if (vals.every((part) => part === vals[0])) target.val = tagChipVal(vals[0]);
+        else target.val = `{${vals.map((part) => (part === '' ? '0' : part)).join('/')}}`;
+        commitDesigned({ immediate: true });
+      };
+      for (const cell of cells) {
+        cell.addEventListener('change', writeTiers);
+        wrap.appendChild(cell);
+      }
+      value = wrap;
+    } else if (carriesVal) {
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'chip-val';
@@ -2602,6 +2648,96 @@ function buildStringListControl(spec: FieldSpec, owner: any, path: (string | num
     },
     blank: () => '',
   });
+}
+
+// cells front a bonuses id/val array
+function buildBonusGrid(spec: FieldSpec, owner: any, fieldId: string): HTMLElement {
+  const cellIds = new Set((spec.cells ?? []).map((cell) => cell.key));
+  const gridBound = (entry: any) =>
+    isPlainObject(entry) && cellIds.has(entry.id) && entry.replace !== true && entry.overwrite !== true;
+  const outer = document.createElement('div');
+  const host = document.createElement('div');
+  host.className = 'stat-grid';
+  for (const cell of spec.cells ?? []) {
+    const wrap = document.createElement('label');
+    wrap.className = 'stat-cell';
+    const label = document.createElement('span');
+    label.className = 'stat-label';
+    label.innerText = cell.label;
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'form-input';
+    input.id = controlId(`${fieldId}.${cell.key}`);
+    const list: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
+    const existing = list.find((entry) => gridBound(entry) && entry.id === cell.key);
+    const raw = existing?.val;
+    input.value = typeof raw === 'number' || typeof raw === 'string' ? String(raw) : '';
+    input.addEventListener('input', () => {
+      const current: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
+      const idx = current.findIndex((entry) => gridBound(entry) && entry.id === cell.key);
+      if (input.value.trim() === '') {
+        if (idx !== -1) {
+          current.splice(idx, 1);
+          if (current.length === 0) delete owner[spec.key];
+          else owner[spec.key] = current;
+        }
+      } else if (idx !== -1) {
+        current[idx].val = Number(input.value);
+      } else {
+        current.push({ id: cell.key, val: Number(input.value) });
+        owner[spec.key] = current;
+      }
+      commitDesigned();
+    });
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    host.appendChild(wrap);
+  }
+  outer.appendChild(host);
+
+  const list: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
+  list.forEach((entry, idx) => {
+    if (gridBound(entry) || !isPlainObject(entry)) return;
+    const line = document.createElement('div');
+    line.className = 'row-line';
+    const idInput = document.createElement('input');
+    idInput.type = 'text';
+    idInput.className = 'form-input row-val bonus-extra-id';
+    idInput.placeholder = 'id';
+    idInput.setAttribute('aria-label', 'Bonus id');
+    idInput.value = asText(entry.id);
+    idInput.addEventListener('change', () => {
+      entry.id = idInput.value.trim();
+      commitDesigned({ immediate: true, rerender: true });
+    });
+    const valInput = document.createElement('input');
+    valInput.type = 'text';
+    valInput.className = 'form-input row-val bonus-extra-val';
+    valInput.placeholder = 'value';
+    valInput.setAttribute('aria-label', 'Bonus value');
+    valInput.value = asText(entry.val);
+    valInput.addEventListener('input', () => {
+      entry.val = tagChipVal(valInput.value.trim());
+      commitDesigned();
+    });
+    line.appendChild(idInput);
+    line.appendChild(valInput);
+    line.appendChild(button('row-remove', '×', () => {
+      list.splice(idx, 1);
+      if (list.length === 0) delete owner[spec.key];
+      else owner[spec.key] = list;
+      commitDesigned({ immediate: true, rerender: true });
+    }, { aria: 'Remove bonus' }));
+    outer.appendChild(line);
+  });
+
+  outer.appendChild(button('btn-add-field btn-add-row', '+ Bonus', () => {
+    const current: any[] = Array.isArray(owner[spec.key]) ? owner[spec.key] : [];
+    current.push({ id: '', val: 1 });
+    owner[spec.key] = current;
+    commitDesigned({ immediate: true, rerender: true });
+  }, { dataset: { add: spec.key } }));
+  return outer;
 }
 
 function buildStatsGrid(spec: FieldSpec, owner: any, path: (string | number)[], fieldId: string): HTMLElement {
