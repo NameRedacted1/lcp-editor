@@ -1309,22 +1309,23 @@ function tierCells(
   fieldId: string,
   onCommit: (immediate: boolean) => void,
   ariaLabel?: string,
+  numeric = true,
 ): HTMLElement[] {
   const cells: HTMLElement[] = [];
   for (let tier = 0; tier < 3; tier += 1) {
     const input = document.createElement('input');
-    input.type = 'number';
+    input.type = numeric ? 'number' : 'text';
     input.className = 'form-input tier-cell';
     input.id = controlId(`${fieldId}.${tier}`);
     input.dataset.tier = String(tier);
     if (ariaLabel !== undefined) input.setAttribute('aria-label', `${ariaLabel} tier ${tier + 1}`);
     input.value = tierCellText(holder[key], tier);
     input.addEventListener('input', () => {
-      writeTierCell(holder, key, tier, input.value);
+      writeTierCell(holder, key, tier, input.value, numeric);
       onCommit(false);
     });
     input.addEventListener('change', () => {
-      writeTierCell(holder, key, tier, input.value);
+      writeTierCell(holder, key, tier, input.value, numeric);
       onCommit(true);
     });
     cells.push(input);
@@ -1446,6 +1447,7 @@ function buildValueRows(
         `${spec.key}.${idx}`,
         (immediate) => commitDesigned({ immediate }),
         spec.label,
+        vocab !== 'damageTypes',
       )) {
         line.appendChild(cell);
       }
@@ -2568,8 +2570,8 @@ function tierCellText(raw: any, tier: number): string {
   return asText(raw);
 }
 
-function writeTierCell(stats: any, key: string, tier: number, text: string) {
-  const next = text.trim() === '' ? '' : Number(text);
+function writeTierCell(stats: any, key: string, tier: number, text: string, numeric = true) {
+  const next = text.trim() === '' ? '' : numeric ? Number(text) : tagChipVal(text);
   const raw = stats[key];
   if (Array.isArray(raw)) {
     const cell = raw[tier];
@@ -2958,10 +2960,12 @@ function isNumericCell(value: unknown): boolean {
   return text !== '' && !Number.isNaN(Number(text));
 }
 
-function tierValueProblem(raw: any, emptyMessage: string): string | null {
+function tierValueProblem(raw: any, emptyMessage: string, allowText = false): string | null {
   if (Array.isArray(raw)) {
-    if (raw.length === 0) return 'Each tier needs a number.';
-    return raw.every((cell) => isNumericCell(cell)) ? null : 'Each tier needs a number.';
+    const message = allowText ? 'Each tier needs a value.' : 'Each tier needs a number.';
+    if (raw.length === 0) return message;
+    const filled = (cell: any) => asText(Array.isArray(cell) ? cell[0] : cell).trim() !== '';
+    return raw.every((cell) => (allowText ? filled(cell) : isNumericCell(cell))) ? null : message;
   }
   if (typeof raw === 'number') return Number.isFinite(raw) ? null : 'Needs a number.';
   return asText(raw).trim() === '' ? emptyMessage : null;
@@ -3015,10 +3019,10 @@ function fieldProblems(cat: string, item: any): Map<string, string> {
   else if (/\s/.test(id)) problems.set('id', 'IDs cannot contain spaces.');
 
   const tieredCat = cat === 'npc_features.json';
-  const rowsProblem = (list: any[], emptyMessage: string, typeMessage: string): string | null => {
+  const rowsProblem = (list: any[], emptyMessage: string, typeMessage: string, allowTextTiers = false): string | null => {
     for (const entry of list) {
       if (!isPlainObject(entry)) return 'Each row needs a type and a value.';
-      const problem = tierValueProblem(entry[rowValueKey(entry)], tieredCat ? 'Needs a number or three tier values.' : emptyMessage);
+      const problem = tierValueProblem(entry[rowValueKey(entry)], tieredCat ? 'Needs a number or three tier values.' : emptyMessage, allowTextTiers);
       if (problem !== null) return problem;
     }
     if (list.some((entry: any) => asText(entry.type).trim() === '')) return typeMessage;
@@ -3028,7 +3032,7 @@ function fieldProblems(cat: string, item: any): Map<string, string> {
   for (const key of ['damage', 'added_damage']) {
     const list = item[key];
     if (!Array.isArray(list) || list.length === 0) continue;
-    const problem = rowsProblem(list, 'Every damage row needs a value like 2d6.', 'Pick a damage type.');
+    const problem = rowsProblem(list, 'Every damage row needs a value like 2d6.', 'Pick a damage type.', true);
     if (problem !== null) problems.set(key, problem);
   }
 

@@ -7,7 +7,6 @@ import * as esbuild from 'esbuild';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = join(__dirname, 'web');
 const DIST_DIR = join(__dirname, 'dist');
-// const PAGE_SLUG = 'lcp-editor'; // dist used to nest under this
 const EIDOLON_DATA_SRC = join(WEB_DIR, 'lcp-editor', 'eidolon-data.json');
 
 function textHash(text) {
@@ -36,15 +35,8 @@ async function buildEditorPage() {
     throw new Error(`lcp-editor: ${built.errors.map((e) => e.text).join('; ')}`);
   }
 
-  const entryOutput = built.outputFiles.find((file) => file.path.endsWith('lcp-editor.js'));
-  if (entryOutput === undefined) throw new Error('lcp-editor: esbuild produced no entry output');
-
-  const chunks = [];
-  for (const file of built.outputFiles) {
-    mkdirSync(dirname(file.path), { recursive: true });
-    writeFileSync(file.path, file.text, 'utf8');
-    if (file !== entryOutput) chunks.push({ name: file.path.slice(DIST_DIR.length + 1), bytes: Buffer.byteLength(file.text) });
-  }
+  const [entryOutput] = built.outputFiles;
+  writeFileSync(entryOutput.path, entryOutput.text, 'utf8');
 
   const css = readFileSync(join(WEB_DIR, 'lcp-editor.css'), 'utf8');
   writeFileSync(join(DIST_DIR, 'lcp-editor.css'), css, 'utf8');
@@ -60,7 +52,6 @@ async function buildEditorPage() {
 
   console.log(`Built lcp-editor into ${DIST_DIR}`);
   console.log(`  / (${(entryOutput.text.length / 1024).toFixed(1)} KiB entry, ${scriptVersion})`);
-  for (const chunk of chunks) console.log(`    ${chunk.name} (${(chunk.bytes / 1024).toFixed(1)} KiB)`);
   console.log('  /eidolon.json');
 }
 
