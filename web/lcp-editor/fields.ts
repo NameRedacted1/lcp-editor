@@ -25,6 +25,7 @@ export type FieldKind =
   | 'number'
   | 'select'
   | 'checkbox'
+  | 'boolean'
   | 'id'
   | 'damage'
   | 'range'
@@ -336,6 +337,8 @@ export const WEAPON_PROFILE_COLUMNS: FieldSpec[] = [
   { key: 'on_hit', label: 'On Hit', kind: 'textarea', wide: true, optional: true },
   { key: 'on_crit', label: 'On Crit', kind: 'textarea', wide: true, optional: true },
   { key: 'tags', label: 'Tags', kind: 'tags', wide: true, optional: true },
+  { key: 'actions', label: 'Action', kind: 'rows', wide: true, optional: true, addLabel: '+ Action', columns: ACTION_COLUMNS },
+  { key: 'skirmish', label: 'Skirmish', kind: 'boolean', optional: true },
 ];
 
 export const SYSTEM_BONUS_COLUMNS: FieldSpec[] = [

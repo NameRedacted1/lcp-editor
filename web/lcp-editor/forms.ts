@@ -918,6 +918,7 @@ function blankForKind(kind: FieldKind): any {
     case 'number':
       return 0;
     case 'checkbox':
+    case 'boolean':
       return false;
     case 'damage':
     case 'range':
@@ -954,6 +955,14 @@ function blankValueRow(spec: FieldSpec, vocab: VocabKey, numeric: boolean): any 
   const seedType = referenceIndex[vocab]?.[0] ?? '';
   if (spec.tiered === true) return { type: seedType, [key]: [0, 0, 0] };
   return numeric ? { type: seedType, [key]: 5 } : { type: seedType, [key]: '' };
+}
+
+// profile skirmishable inherits the weapon default
+function skirmishSeed(): boolean {
+  const item = itemAt(currentCategory ?? '', currentItemIndex ?? -1) as any;
+  if (item === null || typeof item !== 'object') return true;
+  if (typeof item.skirmish === 'boolean') return item.skirmish;
+  return asText(item.mount).trim().toLowerCase() !== 'superheavy';
 }
 
 function objectSlotFor(owner: any, key: string): any | null {
@@ -1006,7 +1015,7 @@ function renderField(
       } else if (spec.kind === 'range' && Array.isArray(blank)) {
         blank.push(blankValueRow(spec, 'rangeTypes', true));
       }
-      owner[spec.key] = blank;
+      owner[spec.key] = spec.key === 'skirmish' ? skirmishSeed() : blank;
       commitDesigned({ immediate: true, rerender: true });
         }, { dataset: { add: spec.key } });
     field.appendChild(add);
@@ -1048,6 +1057,8 @@ function buildControl(
       return buildTextArea(spec, owner, fieldId);
     case 'number':
       return buildNumberInput(spec, owner, fieldId);
+    case 'boolean':
+      return buildBooleanInput(spec, owner, fieldId);
     case 'select':
       return buildSelectInput(spec, owner, fieldId);
     case 'damage':
@@ -1083,6 +1094,35 @@ function buildControl(
     default:
       return buildTextInput(spec, owner, fieldId, rowFollow);
   }
+}
+
+// text field true/false, blank inherits
+function buildBooleanInput(spec: FieldSpec, owner: any, fieldId: string): HTMLElement {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'form-input';
+  input.id = controlId(fieldId);
+  input.autocomplete = 'off';
+  input.placeholder = 'true';
+  input.value = asText(owner[spec.key]);
+  input.setAttribute('aria-label', spec.label);
+  const write = (immediate: boolean) => {
+    const text = input.value.trim().toLowerCase();
+    if (text === '') {
+      delete owner[spec.key];
+      commitDesigned({ immediate, rerender: immediate });
+      return;
+    }
+    if (text !== 'true' && text !== 'false') {
+      if (immediate) input.value = asText(owner[spec.key]);
+      return;
+    }
+    owner[spec.key] = text === 'true';
+    commitDesigned({ immediate });
+  };
+  input.addEventListener('input', () => write(false));
+  input.addEventListener('change', () => write(true));
+  return input;
 }
 
 function buildTextInput(
