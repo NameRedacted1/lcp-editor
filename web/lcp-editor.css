@@ -1286,7 +1286,7 @@ details.array-item:hover > summary .array-item-header-actions {
   min-width: 0;
 }
 
-.btn-delete-item, .btn-duplicate-item, .row-remove, .chip-remove, .row-flag {
+.btn-delete-item, .btn-duplicate-item, .row-remove, .chip-remove {
   background: none;
   border: none;
   color: var(--muted);
@@ -1294,16 +1294,12 @@ details.array-item:hover > summary .array-item-header-actions {
   line-height: 1;
 }
 
-.row-remove, .chip-remove, .row-flag {
+.row-remove, .chip-remove {
   padding: 0 0.2rem;
 }
 
-.row-remove, .row-flag {
+.row-remove {
   font-size: 1.1rem;
-}
-
-.row-flag.has-extras {
-  color: var(--accent);
 }
 
 .row-extras {
@@ -1312,10 +1308,6 @@ details.array-item:hover > summary .array-item-header-actions {
   gap: 0.4rem 0.8rem;
   align-items: center;
   margin-left: 1rem;
-}
-
-.row-extras[hidden] {
-  display: none;
 }
 
 .row-extras .row-extra {
@@ -1559,12 +1551,6 @@ details.form-fieldset.advanced-block > summary {
   color: var(--muted);
 }
 
-.btn-add-optional {
-  width: auto;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.78rem;
-}
-
 .chip.chip-unknown {
   background: rgba(255, 122, 82, 0.1);
   border-color: rgba(255, 122, 82, 0.4);
@@ -1623,6 +1609,29 @@ details.form-fieldset.advanced-block > summary {
 
 .chips-editor .chip-add, .row-line .row-type {
   max-width: 12rem;
+}
+
+.btn-add-optional {
+  width: auto;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+}
+
+.combo.add-picker {
+  align-self: flex-start;
+  width: auto;
+}
+
+.add-picker .combo-input {
+  width: 2.4rem;
+  text-align: center;
+}
+
+.add-picker .combo-menu {
+  right: auto;
+  min-width: 100%;
+  width: max-content;
+  max-width: 16rem;
 }
 
 .tier-scalar {

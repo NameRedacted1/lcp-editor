@@ -840,11 +840,11 @@ export function renderDesignedForm(layout: LayoutSpec, item: any, rootPath: (str
     const grid = document.createElement('div');
     grid.className = 'field-grid';
     for (const spec of sectionFields) covered.add(spec.key);
-    for (const spec of sectionFields) {
+    fieldGrid(grid, sectionFields, item, (spec) => {
       const echoesTitle =
         sectionFields.length === 1 && (spec.label === section.title || `${spec.label}s` === section.title);
-      grid.appendChild(renderField(spec, item, [...rootPath, spec.key], spec.key, echoesTitle));
-    }
+      return renderField(spec, item, [...rootPath, spec.key], spec.key, echoesTitle);
+    }, `_add.${section.title}`, `${section.title} add`);
     block.appendChild(grid);
     form.appendChild(block);
   }
@@ -991,6 +991,74 @@ interface RowIdFollow {
   idFieldId: string;
 }
 
+function materializeField(spec: FieldSpec, owner: any): void {
+  const blank = blankForKind(spec.kind);
+  if (spec.kind === 'rows' && Array.isArray(blank)) {
+    const created = blankObjectRow(spec, owner);
+    if (spec.rowIdBase !== undefined) autoIdItems.add(created);
+    blank.push(created);
+  } else if (spec.kind === 'damage' && Array.isArray(blank)) {
+    blank.push(blankValueRow(spec, 'damageTypes', false));
+  } else if (spec.kind === 'range' && Array.isArray(blank)) {
+    blank.push(blankValueRow(spec, 'rangeTypes', true));
+  }
+  owner[spec.key] = spec.key === 'skirmish' ? skirmishSeed() : blank;
+  commitDesigned({ immediate: true, rerender: true });
+}
+
+interface AddOption {
+  id: string;
+  label: string;
+  pick: () => void;
+}
+
+// never name a column add
+function addPicker(options: AddOption[], fieldId: string, aria: string): HTMLElement | null {
+  if (options.length === 0) return null;
+  if (options.length === 1) {
+    const only = options[0];
+    return button('btn-add-field btn-add-optional', `+ ${only.label}`, only.pick, { dataset: { add: only.id } });
+  }
+  return buildCombo(
+    '+',
+    (needle) =>
+      options
+        .filter((option) => needle === '' || option.label.toLowerCase().includes(needle))
+        .map((option) => ({ id: option.id, name: option.label, note: '' })),
+    (id) => options.find((option) => option.id === id)?.pick(),
+    fieldId,
+    { comboClass: 'combo add-picker', clearInputOnPick: true, hideOnPick: true, ariaLabel: aria },
+  );
+}
+
+function fieldGrid(
+  grid: HTMLElement,
+  specs: FieldSpec[],
+  owner: any,
+  renderOne: (spec: FieldSpec) => HTMLElement,
+  pickerId: string,
+  aria: string,
+): void {
+  const absent: FieldSpec[] = [];
+  for (const spec of specs) {
+    if (spec.optional === true && (owner === null || typeof owner !== 'object' || !(spec.key in owner))) {
+      absent.push(spec);
+      continue;
+    }
+    grid.appendChild(renderOne(spec));
+  }
+  const picker = addPicker(
+    absent.map((spec) => ({ id: spec.key, label: spec.label, pick: () => materializeField(spec, owner) })),
+    pickerId,
+    aria,
+  );
+  if (picker === null) return;
+  const cell = document.createElement('div');
+  cell.className = 'field';
+  cell.appendChild(picker);
+  grid.appendChild(cell);
+}
+
 function renderField(
   spec: FieldSpec,
   owner: any,
@@ -1002,25 +1070,6 @@ function renderField(
   const field = document.createElement('div');
   field.className = spec.wide === true ? 'field wide' : 'field';
   field.dataset.field = fieldId;
-
-  if (spec.optional === true && (owner === null || typeof owner !== 'object' || !(spec.key in owner))) {
-    const add = button('btn-add-field btn-add-optional', `+ ${spec.label}`, () => {
-      const blank = blankForKind(spec.kind);
-      if (spec.kind === 'rows' && Array.isArray(blank)) {
-        const created = blankObjectRow(spec, owner);
-        if (spec.rowIdBase !== undefined) autoIdItems.add(created);
-        blank.push(created);
-      } else if (spec.kind === 'damage' && Array.isArray(blank)) {
-        blank.push(blankValueRow(spec, 'damageTypes', false));
-      } else if (spec.kind === 'range' && Array.isArray(blank)) {
-        blank.push(blankValueRow(spec, 'rangeTypes', true));
-      }
-      owner[spec.key] = spec.key === 'skirmish' ? skirmishSeed() : blank;
-      commitDesigned({ immediate: true, rerender: true });
-        }, { dataset: { add: spec.key } });
-    field.appendChild(add);
-    return field;
-  }
 
   if (spec.kind === 'checkbox') {
     const { host } = checkControl(spec.label, fieldId, owner[spec.key] === true, (on) => {
@@ -1386,7 +1435,6 @@ const DAMAGE_EXTRA_KEYS: [string, boolean][] = [
   ['aoe', true], ['ap', true], ['save', false], ['save_half', true], ['target', false], ['override', true],
 ];
 const RANGE_EXTRA_KEYS: [string, boolean][] = [['override', true]];
-const expandedValueRows = new WeakSet<object>();
 
 function buildValueRows(
   spec: FieldSpec,
@@ -1473,13 +1521,7 @@ function buildValueRows(
     const reserved = new Set(['type', valueKey]);
     const extras = document.createElement('div');
     extras.className = 'row-extras';
-    extras.hidden = !expandedValueRows.has(entry);
     const present = Object.keys(entry).filter((key) => !reserved.has(key));
-    const flag = button(present.length === 0 ? 'row-flag' : 'row-flag has-extras', '…', () => {
-      if (expandedValueRows.has(entry)) expandedValueRows.delete(entry);
-      else expandedValueRows.add(entry);
-      extras.hidden = !expandedValueRows.has(entry);
-    }, { aria: `${spec.label} extras` });
     for (const key of present) {
       const value = entry[key];
       const id = `${fieldId ?? spec.key}.${idx}.${key}`;
@@ -1547,17 +1589,25 @@ function buildValueRows(
         extras.appendChild(wrap);
       }
     }
-    for (const [key, isFlag] of known) {
-      if (key in entry) continue;
-      extras.appendChild(button('btn-add-field row-extra-add', `+ ${humanizeKey(key)}`, () => {
-        entry[key] = isFlag ? true : '';
-        commitDesigned({ immediate: true, rerender: true });
-      }, { dataset: { add: key } }));
-    }
-    line.appendChild(flag);
+    const picker = addPicker(
+      known
+        .filter(([key]) => !(key in entry))
+        .map(([key, isFlag]) => ({
+          id: key,
+          label: humanizeKey(key),
+          pick: () => {
+            entry[key] = isFlag ? true : '';
+            commitDesigned({ immediate: true, rerender: true });
+          },
+        })),
+      `${fieldId ?? spec.key}.${idx}._add`,
+      `${spec.label} extras`,
+    );
+    if (picker !== null) line.appendChild(picker);
     line.appendChild(remove);
     host.appendChild(line);
-    host.appendChild(extras);
+    // empty extras div still eats its margin
+    if (present.length > 0) host.appendChild(extras);
   });
 
   const add = button('btn-add-field btn-add-row', spec.addLabel ?? `+ ${spec.label}`, () => {
@@ -2760,8 +2810,9 @@ function buildObjectRows(spec: FieldSpec, owner: any, path: (string | number)[],
       const grid = document.createElement('div');
       grid.className = 'field-grid';
       const covered = new Set<string>();
-      for (const column of designedFieldSpecs(columns, entry)) {
-        covered.add(column.key);
+      const rowColumns = designedFieldSpecs(columns, entry);
+      for (const column of rowColumns) covered.add(column.key);
+      fieldGrid(grid, rowColumns, entry, (column) => {
         const columnFieldId = `${fieldId}.${idx}.${column.key}`;
         const rowFollow: RowIdFollow | undefined =
           spec.rowIdBase !== undefined && (column.key === 'id' || column.key === 'name')
@@ -2771,8 +2822,8 @@ function buildObjectRows(spec: FieldSpec, owner: any, path: (string | number)[],
                 idFieldId: `${fieldId}.${idx}.id`,
               }
             : undefined;
-        grid.appendChild(renderField(column, entry, [...path, idx, column.key], columnFieldId, false, rowFollow));
-      }
+        return renderField(column, entry, [...path, idx, column.key], columnFieldId, false, rowFollow);
+      }, `${fieldId}.${idx}._add`, `${spec.label} add`);
       row.appendChild(grid);
       const more = advancedBlock(entry, [...path, idx], covered, 'More', true);
       if (more !== null) row.appendChild(more);
@@ -2943,10 +2994,9 @@ function buildGroupControl(spec: FieldSpec, owner: any, path: (string | number)[
   const grid = document.createElement('div');
   grid.className = 'field-grid';
   const covered = new Set<string>();
-  for (const sub of designedFieldSpecs(spec.fields ?? [], group)) {
-    covered.add(sub.key);
-    grid.appendChild(renderField(sub, group, [...path, sub.key], `${fieldId}.${sub.key}`));
-  }
+  const subs = designedFieldSpecs(spec.fields ?? [], group);
+  for (const sub of subs) covered.add(sub.key);
+  fieldGrid(grid, subs, group, (sub) => renderField(sub, group, [...path, sub.key], `${fieldId}.${sub.key}`), `${fieldId}._add`, `${spec.label} add`);
   host.appendChild(grid);
   const more = advancedBlock(group, path, covered, 'More', true);
   if (more !== null) host.appendChild(more);
