@@ -2,6 +2,7 @@
   "name": "lcp-editor",
   "version": "0.5.0",
   "description": "Editor for lcps.",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

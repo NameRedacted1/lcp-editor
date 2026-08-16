@@ -729,6 +729,26 @@ export function button(
   return el;
 }
 
+function checkControl(
+  label: string,
+  id: string,
+  checked: boolean,
+  onChange: (on: boolean) => void,
+): { host: HTMLElement; box: HTMLInputElement } {
+  const host = document.createElement('label');
+  host.className = 'field-check';
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.id = controlId(id);
+  box.checked = checked;
+  box.addEventListener('change', () => onChange(box.checked));
+  const text = document.createElement('span');
+  text.innerText = label;
+  host.appendChild(box);
+  host.appendChild(text);
+  return { host, box };
+}
+
 interface ChipSpec {
   label: string;
   dataset: Record<string, string>;
@@ -994,21 +1014,11 @@ function renderField(
   }
 
   if (spec.kind === 'checkbox') {
-    const line = document.createElement('label');
-    line.className = 'field-check';
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    box.id = controlId(fieldId);
-    box.checked = owner[spec.key] === true;
-    box.addEventListener('change', () => {
-      owner[spec.key] = box.checked;
+    const { host } = checkControl(spec.label, fieldId, owner[spec.key] === true, (on) => {
+      owner[spec.key] = on;
       commitDesigned({ immediate: true });
     });
-    const text = document.createElement('span');
-    text.innerText = spec.label;
-    line.appendChild(box);
-    line.appendChild(text);
-    field.appendChild(line);
+    field.appendChild(host);
   } else {
     if (!hideLabel) {
       const label = document.createElement('label');
@@ -1330,6 +1340,13 @@ function buildCountInput(spec: FieldSpec, owner: any, fieldId: string): HTMLElem
   return input;
 }
 
+// extras, plain boolean key
+const DAMAGE_EXTRA_KEYS: [string, boolean][] = [
+  ['aoe', true], ['ap', true], ['save', false], ['save_half', true], ['target', false], ['override', true],
+];
+const RANGE_EXTRA_KEYS: [string, boolean][] = [['override', true]];
+const expandedValueRows = new WeakSet<object>();
+
 function buildValueRows(
   spec: FieldSpec,
   owner: any,
@@ -1352,6 +1369,7 @@ function buildValueRows(
   if (fieldId !== undefined) host.id = controlId(fieldId);
 
   const list: any[] = Array.isArray(existing) ? existing : [];
+  const known = vocab === 'damageTypes' ? DAMAGE_EXTRA_KEYS : RANGE_EXTRA_KEYS;
   list.forEach((_unused, idx) => {
     const entry = entryObjectAt(list, idx);
     const valueKey = rowValueKey(entry);
@@ -1409,8 +1427,95 @@ function buildValueRows(
       line.appendChild(val);
       line.appendChild(type);
     }
+
+    const reserved = new Set(['type', valueKey]);
+    const extras = document.createElement('div');
+    extras.className = 'row-extras';
+    extras.hidden = !expandedValueRows.has(entry);
+    const present = Object.keys(entry).filter((key) => !reserved.has(key));
+    const flag = button(present.length === 0 ? 'row-flag' : 'row-flag has-extras', '…', () => {
+      if (expandedValueRows.has(entry)) expandedValueRows.delete(entry);
+      else expandedValueRows.add(entry);
+      extras.hidden = !expandedValueRows.has(entry);
+    }, { aria: `${spec.label} extras` });
+    for (const key of present) {
+      const value = entry[key];
+      const id = `${fieldId ?? spec.key}.${idx}.${key}`;
+      if (key === 'aoe' && (value === null || typeof value !== 'object')) {
+        // aoe is string (checkbox holds the flag)
+        const wrap = document.createElement('div');
+        wrap.className = 'row-extra';
+        const refine = document.createElement('input');
+        refine.className = 'form-input row-extra-input';
+        refine.type = 'text';
+        refine.id = controlId(`${id}.val`);
+        refine.placeholder = 'burst 3';
+        refine.value = typeof value === 'string' ? value : '';
+        refine.setAttribute('aria-label', `${spec.label} AoE text`);
+        const on = value === true || (typeof value === 'string' && value !== '');
+        const { host: check, box } = checkControl(humanizeKey(key), id, on, (checked) => {
+          if (checked) entry[key] = refine.value.trim() === '' ? true : refine.value;
+          else delete entry[key];
+          commitDesigned({ immediate: true, rerender: !checked });
+        });
+        const writeAoe = (immediate: boolean) => {
+          entry[key] = refine.value.trim() === '' ? true : refine.value;
+          box.checked = true;
+          commitDesigned({ immediate });
+        };
+        refine.addEventListener('input', () => writeAoe(false));
+        refine.addEventListener('change', () => writeAoe(true));
+        wrap.appendChild(check);
+        wrap.appendChild(refine);
+        extras.appendChild(wrap);
+      } else if (typeof value === 'boolean') {
+        const { host: check } = checkControl(humanizeKey(key), id, value === true, (checked) => {
+          if (checked) entry[key] = true;
+          else delete entry[key];
+          commitDesigned({ immediate: true, rerender: !checked });
+        });
+        check.classList.add('row-extra');
+        extras.appendChild(check);
+      } else if (value !== null && typeof value === 'object') {
+        const block = document.createElement('div');
+        block.className = 'fallback-block row-extra';
+        renderRecursiveForm(value, path, block, { bare: true });
+        extras.appendChild(block);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'row-extra';
+        const name = document.createElement('label');
+        name.innerText = humanizeKey(key);
+        name.htmlFor = controlId(id);
+        const input = document.createElement('input');
+        input.className = 'form-input row-extra-input';
+        input.type = 'text';
+        input.id = controlId(id);
+        input.value = asText(value);
+        input.setAttribute('aria-label', `${spec.label} ${humanizeKey(key)}`);
+        const write = (immediate: boolean) => {
+          if (input.value.trim() === '') delete entry[key];
+          else entry[key] = tagChipVal(input.value);
+          commitDesigned({ immediate, rerender: immediate && !(key in entry) });
+        };
+        input.addEventListener('input', () => write(false));
+        input.addEventListener('change', () => write(true));
+        wrap.appendChild(name);
+        wrap.appendChild(input);
+        extras.appendChild(wrap);
+      }
+    }
+    for (const [key, isFlag] of known) {
+      if (key in entry) continue;
+      extras.appendChild(button('btn-add-field row-extra-add', `+ ${humanizeKey(key)}`, () => {
+        entry[key] = isFlag ? true : '';
+        commitDesigned({ immediate: true, rerender: true });
+      }, { dataset: { add: key } }));
+    }
+    line.appendChild(flag);
     line.appendChild(remove);
     host.appendChild(line);
+    host.appendChild(extras);
   });
 
   const add = button('btn-add-field btn-add-row', spec.addLabel ?? `+ ${spec.label}`, () => {

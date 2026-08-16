@@ -1286,7 +1286,7 @@ details.array-item:hover > summary .array-item-header-actions {
   min-width: 0;
 }
 
-.btn-delete-item, .btn-duplicate-item, .row-remove, .chip-remove {
+.btn-delete-item, .btn-duplicate-item, .row-remove, .chip-remove, .row-flag {
   background: none;
   border: none;
   color: var(--muted);
@@ -1294,12 +1294,39 @@ details.array-item:hover > summary .array-item-header-actions {
   line-height: 1;
 }
 
-.row-remove, .chip-remove {
+.row-remove, .chip-remove, .row-flag {
   padding: 0 0.2rem;
 }
 
-.row-remove {
+.row-remove, .row-flag {
   font-size: 1.1rem;
+}
+
+.row-flag.has-extras {
+  color: var(--accent);
+}
+
+.row-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+  margin-left: 1rem;
+}
+
+.row-extras[hidden] {
+  display: none;
+}
+
+.row-extras .row-extra {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.row-extras .row-extra-input {
+  width: 7rem;
 }
 
 .chip-remove {

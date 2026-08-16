@@ -120,6 +120,8 @@ export const NPC_BONUS_CELLS = [
 ];
 
 const STAT_LABEL_OVERRIDES: Record<string, string> = {
+  aoe: 'AoE',
+  ap: 'AP',
   hp: 'HP',
   hp_bonus: 'HP Bonus',
   sp: 'SP',
